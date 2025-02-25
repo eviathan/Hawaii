@@ -297,4 +297,3 @@
 /Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-maccatalyst/maccatalyst-x64/Hawaii.Test.pdb
 /Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-maccatalyst/maccatalyst-x64/Hawaii.Test.genruntimeconfig.cache
 /Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-maccatalyst/maccatalyst-x64/ref/Hawaii.Test.dll
-/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-maccatalyst/maccatalyst-x64/resourcestamps/Hawaii.stamp

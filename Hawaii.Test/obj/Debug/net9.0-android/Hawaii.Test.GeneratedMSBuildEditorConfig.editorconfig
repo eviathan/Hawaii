@@ -24,12 +24,6 @@ build_metadata.AdditionalFiles.ManifestResourceName = Hawaii.Test.App.xaml
 build_metadata.AdditionalFiles.TargetPath = App.xaml
 build_metadata.AdditionalFiles.RelativePath = App.xaml
 
-[/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/AppShell.xaml]
-build_metadata.AdditionalFiles.GenKind = Xaml
-build_metadata.AdditionalFiles.ManifestResourceName = Hawaii.Test.AppShell.xaml
-build_metadata.AdditionalFiles.TargetPath = AppShell.xaml
-build_metadata.AdditionalFiles.RelativePath = AppShell.xaml
-
 [/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/MainPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Hawaii.Test.MainPage.xaml

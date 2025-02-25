@@ -51,7 +51,9 @@ public class SceneRenderer : BindableObject, IDrawable
         if (combinedDirty.IsEmpty)
             combinedDirty = dirtyRect;
 
-        foreach (var node in _scene.GetNodesInDrawOrder())
+        var orderedNodes = _scene.GetNodesInDrawOrder();
+        
+        foreach (var node in orderedNodes)
         {
             var bounds = _scene.GetWorldBounds(node.Id);
             
@@ -65,6 +67,7 @@ public class SceneRenderer : BindableObject, IDrawable
                 
                 if (!node.PropagateScale)
                     canvas.Scale(localScale.X, localScale.Y);
+                
                 node.Renderer?.Draw(canvas, node, combinedDirty);
                 canvas.RestoreState();
             }

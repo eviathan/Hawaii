@@ -1,6 +1,7 @@
 /Users/brian/Dev/Libs/Hawaii/Hawaii/bin/Debug/net9.0/Hawaii.deps.json
 /Users/brian/Dev/Libs/Hawaii/Hawaii/bin/Debug/net9.0/Hawaii.dll
 /Users/brian/Dev/Libs/Hawaii/Hawaii/bin/Debug/net9.0/Hawaii.pdb
+/Users/brian/Dev/Libs/Hawaii/Hawaii/obj/Debug/net9.0/Hawaii.csproj.AssemblyReference.cache
 /Users/brian/Dev/Libs/Hawaii/Hawaii/obj/Debug/net9.0/Hawaii.GeneratedMSBuildEditorConfig.editorconfig
 /Users/brian/Dev/Libs/Hawaii/Hawaii/obj/Debug/net9.0/Hawaii.AssemblyInfoInputs.cache
 /Users/brian/Dev/Libs/Hawaii/Hawaii/obj/Debug/net9.0/Hawaii.AssemblyInfo.cs
@@ -9,4 +10,3 @@
 /Users/brian/Dev/Libs/Hawaii/Hawaii/obj/Debug/net9.0/refint/Hawaii.dll
 /Users/brian/Dev/Libs/Hawaii/Hawaii/obj/Debug/net9.0/Hawaii.pdb
 /Users/brian/Dev/Libs/Hawaii/Hawaii/obj/Debug/net9.0/ref/Hawaii.dll
-/Users/brian/Dev/Libs/Hawaii/Hawaii/obj/Debug/net9.0/Hawaii.csproj.AssemblyReference.cache

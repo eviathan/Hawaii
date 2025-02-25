@@ -21,17 +21,17 @@ public class FeatureSceneBuilder : ISceneBuilder
         
         var scene = new Scene(_sceneService);
         var background = new ImageNode();
-        scene.AddNode(background);
+        scene.AddNode(background, scene.RootNode.Id);
         
         foreach (var feature in viewModel.Features)
         {
             var marker = new FeatureNode();
             scene.AddNode(marker, background.Id);
-            _sceneService.SetTransform(marker.Id, feature.Transform);
+            _sceneService.SetTransform(marker.Id, feature.Transform ?? new Transform());
             foreach (var child in marker.Children)
             {
                 scene.AddNode(child, marker.Id);
-                _sceneService.SetTransform(child.Id, child.Transform);
+                _sceneService.SetTransform(child.Id, child.Transform ?? new Transform());
             }
         }
 

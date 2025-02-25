@@ -4,10 +4,13 @@
              xmlns:global="clr-namespace:Hawaii;assembly=Hawaii"
              xmlns:sceneBuilders="clr-namespace:Hawaii.Test.SceneBuilders"
              x:Class="Hawaii.Test.MainPage">
-    <global:SceneGraphicsView
-        x:TypeArguments="sceneBuilders:FeatureSceneBuilder"
-        State="{Binding .}"
-        WidthRequest="800"
-        HeightRequest="600"
-    />
+    <Grid Background="Red">
+        <global:SceneGraphicsView
+            Background="Purple"
+            x:TypeArguments="sceneBuilders:FeatureSceneBuilder"
+            State="{Binding .}"
+            WidthRequest="800"
+            HeightRequest="600"
+        />
+    </Grid>
 </ContentPage>
