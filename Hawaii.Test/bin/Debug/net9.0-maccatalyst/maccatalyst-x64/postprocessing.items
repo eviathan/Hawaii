@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <_PostProcessingItem Include="Hawaii.Test.app/Contents/MacOS/Hawaii.Test">
+      <IsAppExtension>false</IsAppExtension>
+      <BCSymbolMapName>Hawaii.Test.bcsymbolmap</BCSymbolMapName>
+      <NoDSymUtil>true</NoDSymUtil>
+      <dSYMSourcePathExists>false</dSYMSourcePathExists>
+      <NoSymbolStrip>true</NoSymbolStrip>
+      <dSYMInfoPlistRelativePath>Hawaii.Test.app.dSYM\Contents\Info.plist</dSYMInfoPlistRelativePath>
+      <SymbolFile>/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-maccatalyst/maccatalyst-x64/mtouch-symbols.list</SymbolFile>
+      <DSymName>Hawaii.Test.app.dSYM</DSymName>
+      <SourceProjectPath>/Users/brian/Dev/Libs/Hawaii/Hawaii.Test</SourceProjectPath>
+      <IsXPCService></IsXPCService>
+    </_PostProcessingItem>
+  </ItemGroup>
+</Project>
