@@ -98,12 +98,16 @@ public class EventDispatcher
 
         private void PropagateEvent(PointF worldPoint, Func<Node, TouchEventData, bool> handler)
         {
-            foreach (var node in GetNodesInHitTestOrder(_scene.RootNode))
+            var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
+            
+            foreach (var node in orderedNodes)
             {
                 var worldBounds = _scene.GetWorldBounds(node.Id);
+                
                 if (worldBounds.Contains(worldPoint))
                 {
                     var localPoint = TransformToLocal(node, worldPoint);
+                    
                     if (node.GetLocalBounds().Contains(localPoint))
                     {
                         var touchData = new TouchEventData(worldPoint, localPoint);
@@ -116,13 +120,17 @@ public class EventDispatcher
 
         private void PropagateTwoFingerEvent(PointF pointA, PointF pointB, Func<Node, GestureEventData, bool> handler)
         {
-            foreach (var node in GetNodesInHitTestOrder(_scene.RootNode))
+            var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
+            
+            foreach (var node in orderedNodes)
             {
                 var worldBounds = _scene.GetWorldBounds(node.Id);
+                
                 if (worldBounds.Contains(pointA) || worldBounds.Contains(pointB))
                 {
                     var localA = TransformToLocal(node, pointA);
                     var localB = TransformToLocal(node, pointB);
+                    
                     if (node.GetLocalBounds().Contains(localA) || node.GetLocalBounds().Contains(localB))
                     {
                         var gestureData = new GestureEventData(

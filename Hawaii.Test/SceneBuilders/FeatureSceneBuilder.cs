@@ -13,30 +13,30 @@ public class FeatureSceneBuilder : ISceneBuilder
         _sceneService = sceneService ?? throw new ArgumentNullException(nameof(sceneService));
     }
     
-    public Scene Build(INodeState state)
+    public void Build(Scene scene, INodeState state)
     {
-        if (state is not FeaturesViewModel viewModel)
-            throw new ArgumentException("Expected FeaturesViewModel", nameof(state));
+        // scene.ClearNodes();
         
-        var scene = new Scene(_sceneService);
         var background = new ImageNode();
-        
         scene.AddNode(background, scene.RootNode.Id);
-        
-        foreach (var feature in viewModel.Features)
+
+        if (state is FeaturesViewModel viewModel)
         {
-            var marker = new FeatureNode();
-            scene.AddNode(marker, background.Id);
-            
-            _sceneService.SetTransform(marker.Id, feature.Transform ?? new Transform());
-            
-            foreach (var child in marker.Children)
+            foreach (var feature in viewModel.Features)
             {
-                scene.AddNode(child, marker.Id);
-                _sceneService.SetTransform(child.Id, child.Transform ?? new Transform());
+                var marker = new FeatureNode();
+                scene.AddNode(marker, background.Id);
+                
+                _sceneService.SetTransform(marker.Id, feature.Transform ?? new Transform());
+                
+                foreach (var child in marker.Children)
+                {
+                    scene.AddNode(child, marker.Id);
+                    _sceneService.SetTransform(child.Id, child.Transform ?? new Transform());
+                }
             }
         }
-
-        return scene;
+        
+        Console.WriteLine($"Built HierarchyMap: {string.Join(", ", scene.HierarchyMap.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
     }
 }

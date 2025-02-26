@@ -35,12 +35,15 @@ public class SceneRenderer : BindableObject, IDrawable
         set => SetValue(StateProperty, value);
     }
 
-    public SceneRenderer(ISceneService sceneService, ISceneBuilder sceneBuilder)
+    public SceneRenderer(ISceneService sceneService, ISceneBuilder sceneBuilder, IGestureRecognitionService gestureRecognitionService)
     {
         _sceneService = sceneService ?? throw new ArgumentNullException(nameof(sceneService));
         _sceneBuilder = sceneBuilder ?? throw new ArgumentNullException(nameof(sceneBuilder));
-        
+        _gestureRecognitionService = gestureRecognitionService ?? throw new ArgumentNullException(nameof(gestureRecognitionService));
+
         _scene = new Scene(_sceneService);
+        _scene.InvalidateView = () => GraphicsView?.Invalidate();
+        
         _dispatcher = new EventDispatcher(_scene);
     }
     
@@ -133,7 +136,8 @@ public class SceneRenderer : BindableObject, IDrawable
             return;
 
         _state = State;
-        _scene = _sceneBuilder.Build(_state);
+        _sceneBuilder.Build(_scene, _state);
+        
         GraphicsView?.Invalidate();
 
         if (_state is INotifyPropertyChanged notify)
@@ -145,7 +149,7 @@ public class SceneRenderer : BindableObject, IDrawable
 
     private void OnStatePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-        _scene = _sceneBuilder.Build(_state);
+        _sceneBuilder.Build(_scene, _state);
         GraphicsView?.Invalidate();
     }
 }

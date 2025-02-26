@@ -2,5 +2,5 @@ namespace Hawaii.Interfaces;
 
 public interface ISceneBuilder
 {
-    Scene Build(INodeState state);
+    void Build(Scene scene, INodeState state);
 }
