@@ -1,5 +1,6 @@
 using System.Numerics;
 using Hawaii.Enums;
+using Hawaii.EventData;
 using Hawaii.Interfaces;
 
 namespace Hawaii.Test.Nodes;
@@ -32,11 +33,20 @@ public class FeatureNode : Node
         ];
     }
 
-    public override bool OnClicked(PointF worldPoint)
+    public override bool OnClicked(TouchEventData touchData)
     {
+        Console.WriteLine($"Clicked at Local: {touchData.LocalPoint}, World: {touchData.WorldPoint}");
         WasClicked = !WasClicked;
         return true;
     }
+
+    // public override bool OnDrag(TouchEventData touchData, PointF localDelta)
+    // {
+    //     var transform = _sceneService.GetTransform(Id);
+    //     transform.Position += new Vector2(localDelta.X, localDelta.Y);
+    //     _sceneService.SetTransform(Id, transform);
+    //     return true;
+    // }
 
     public bool WasClicked { get; set; }
 

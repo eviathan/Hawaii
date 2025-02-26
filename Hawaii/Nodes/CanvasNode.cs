@@ -1,4 +1,5 @@
 using Hawaii.Enums;
+using Hawaii.EventData;
 using Hawaii.Interfaces;
 
 namespace Hawaii.Nodes;
@@ -12,7 +13,7 @@ public class CanvasNode : Node
         Size = new SizeF(1400, 1000);
     }
 
-    public override bool OnClicked(PointF worldPoint)
+    public override bool OnClicked(TouchEventData touchData)
     {
         return false;
     }

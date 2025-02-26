@@ -1,4 +1,5 @@
 using Hawaii.Enums;
+using Hawaii.EventData;
 using Hawaii.Interfaces;
 
 namespace Hawaii;
@@ -27,17 +28,12 @@ public class Node
     
     public virtual RectF GetLocalBounds() => new RectF(0f, 0f, Size.Width, Size.Height);
 
-    public virtual bool OnClicked(PointF worldPoint) => false;
-
-    public virtual bool OnDrag(PointF worldPoint, PointF delta) => false;
-    
-    public virtual bool OnTwoFingerClicked(PointF pointA, PointF pointB) => false;
-
-    public virtual bool OnTwoFingerDrag(PointF pointA, PointF pointB, PointF delta) => false;
-
-    public virtual bool OnPinch(PointF pointA, PointF pointB, float scaleFactor) => false;
-
-    public virtual bool OnRotate(PointF pointA, PointF pointB, float angle) => false;
+    public virtual bool OnClicked(TouchEventData touchData) => false;
+    public virtual bool OnDrag(TouchEventData touchData, PointF localDelta) => false;
+    public virtual bool OnTwoFingerClicked(GestureEventData gestureData) => false;
+    public virtual bool OnTwoFingerDrag(GestureEventData gestureData) => false;
+    public virtual bool OnPinch(GestureEventData gestureData) => false;
+    public virtual bool OnRotate(GestureEventData gestureData) => false;
 
     public void AddChild(Node child) =>
         Children.Add(child);

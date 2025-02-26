@@ -1,4 +1,5 @@
 using Hawaii.Enums;
+using Hawaii.EventData;
 using Hawaii.Interfaces;
 
 namespace Hawaii.Test.Nodes;
@@ -12,9 +13,10 @@ public class FeatureHandleNode : Node
         Size = new SizeF(50, 50);
     }
 
-    public override bool OnClicked(PointF worldPoint)
+    public override bool OnClicked(TouchEventData touchData)
     {
-        return base.OnClicked(worldPoint);
+        Console.WriteLine($"Clicked at Local: {touchData.LocalPoint}, World: {touchData.WorldPoint}");
+        return true;
     }
 
     private class NodeRenderer : INodeRenderer
