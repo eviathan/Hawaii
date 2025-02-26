@@ -30,6 +30,10 @@ public class Node
     public virtual bool OnClicked(PointF worldPoint) => false;
 
     public virtual bool OnDrag(PointF worldPoint, PointF delta) => false;
+    
+    public virtual bool OnTwoFingerClicked(PointF pointA, PointF pointB) => false;
+
+    public virtual bool OnTwoFingerDrag(PointF pointA, PointF pointB, PointF delta) => false;
 
     public virtual bool OnPinch(PointF pointA, PointF pointB, float scaleFactor) => false;
 

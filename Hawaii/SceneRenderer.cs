@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Numerics;
 using Hawaii.Interfaces;
 using Hawaii.Services;
 
@@ -6,9 +7,17 @@ namespace Hawaii;
 
 public class SceneRenderer : BindableObject, IDrawable
 {
+    public static readonly BindableProperty StateProperty = BindableProperty.Create(
+        nameof(State),
+        typeof(INodeState),
+        typeof(SceneRenderer),
+        propertyChanged: (bindable, _, _) => ((SceneRenderer)bindable).OnStateChanged());
+    
     private readonly ISceneBuilder _sceneBuilder;
 
     private readonly ISceneService _sceneService;
+    
+    private readonly IGestureRecognitionService _gestureRecognitionService;
 
     private readonly EventDispatcher _dispatcher;
 
@@ -18,23 +27,13 @@ public class SceneRenderer : BindableObject, IDrawable
 
     private INodeState _state;
 
-    public static readonly BindableProperty StateProperty = BindableProperty.Create(
-        nameof(State),
-        typeof(INodeState),
-        typeof(SceneRenderer),
-        propertyChanged: (bindable, _, _) => ((SceneRenderer)bindable).OnStateChanged());
+    public GraphicsView? GraphicsView { get; set; }
 
     public INodeState State
     {
         get => (INodeState)GetValue(StateProperty);
         set => SetValue(StateProperty, value);
     }
-
-    public GraphicsView? GraphicsView { get; set; }
-
-    public void HandleSingleTouchDown(PointF worldPoint) => _dispatcher.HandleSingleTouchDown(worldPoint);
-    public void HandleSingleTouchMove(PointF worldPoint) => _dispatcher.HandleSingleTouchMove(worldPoint);
-    public void HandleSingleTouchUp(PointF worldPoint) => _dispatcher.HandleSingleTouchUp(worldPoint);
 
     public SceneRenderer(ISceneService sceneService, ISceneBuilder sceneBuilder)
     {
@@ -43,6 +42,50 @@ public class SceneRenderer : BindableObject, IDrawable
         
         _scene = new Scene(_sceneService);
         _dispatcher = new EventDispatcher(_scene);
+    }
+    
+    public void HandleSingleTouchDown(PointF point)
+    {
+        var worldPoint = TransformToWorld(point);
+        _dispatcher.HandleSingleTouchDown(worldPoint);
+    }
+
+    public void HandleSingleTouchMove(PointF point)
+    {
+        var worldPoint = TransformToWorld(point);
+        _dispatcher.HandleSingleTouchMove(worldPoint);
+    }
+
+    public void HandleSingleTouchUp(PointF point)
+    {
+        var worldPoint = TransformToWorld(point);
+        _dispatcher.HandleSingleTouchUp(worldPoint);
+    }
+    
+    public void HandleTwoFingerDown(PointF pointA, PointF pointB)
+    {
+        _gestureRecognitionService.AddFrame(pointA, pointB);
+        _dispatcher.HandleTwoFingerDown(pointA, pointB);
+    }
+    
+    public void HandleTwoFingerMove(PointF pointA, PointF pointB)
+    {
+        _gestureRecognitionService.AddFrame(pointA, pointB);
+        
+        if (_gestureRecognitionService.TryDetectPan(out var delta))
+            _dispatcher.HandleTwoFingerPan(pointA, pointB, delta);
+        if (_gestureRecognitionService.TryDetectPinch(out var scaleFactor))
+            _dispatcher.HandleTwoFingerPinch(pointA, pointB, scaleFactor);
+        if (_gestureRecognitionService.TryDetectRotation(out var angle))
+            _dispatcher.HandleTwoFingerRotate(pointA, pointB, angle);
+    }
+    
+    public void HandleTwoFingerUp(PointF pointA, PointF pointB)
+    {
+        var worldA = TransformToWorld(pointA);
+        var worldB = TransformToWorld(pointB);
+        
+        _dispatcher.HandleTwoFingerUp(worldA, worldB);
     }
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
@@ -72,6 +115,16 @@ public class SceneRenderer : BindableObject, IDrawable
                 canvas.RestoreState();
             }
         }
+    }
+    
+    private PointF TransformToWorld(PointF screenPoint)
+    {
+        if (Matrix3x2.Invert(_scene.GetWorldTransform(_scene.RootNode.Id), out var inverse))
+        {
+            var worldVec = Vector2.Transform(new Vector2(screenPoint.X, screenPoint.Y), inverse);
+            return new PointF(worldVec.X, worldVec.Y);
+        }
+        return screenPoint;
     }
 
     private void OnStateChanged()

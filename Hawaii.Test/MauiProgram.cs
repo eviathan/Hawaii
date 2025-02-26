@@ -22,6 +22,7 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 		builder.Services.AddSingleton<ISceneService, SceneService>();
+		builder.Services.AddSingleton<IGestureRecognitionService, GestureRecognitionService>();
 		builder.Services.AddTransient<SceneRenderer>();
 		builder.Services.AddTransient<FeatureSceneBuilder>();
 		

@@ -4,6 +4,11 @@ namespace Hawaii.Extensions;
 
 public static class PointFExtensions
 {
+    public static float Length(this PointF point)
+    {
+        return PointF.Zero.Distance(point);
+    }
+    
     public static float Distance(this PointF a, PointF b)
     {
         var deltaX = b.X - a.X;

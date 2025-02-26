@@ -309,3 +309,17 @@
 /Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/Hawaii.Test.genruntimeconfig.cache
 /Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/ref/Hawaii.Test.dll
 /Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Hawaii.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.Configuration.Abstractions.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.Configuration.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.DependencyInjection.Abstractions.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.DependencyInjection.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.Logging.Abstractions.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.Logging.Debug.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.Logging.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.Options.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Extensions.Primitives.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Maui.Controls.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Maui.Controls.Xaml.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Maui.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Maui.Essentials.stamp
+/Users/brian/Dev/Libs/Hawaii/Hawaii.Test/obj/Debug/net9.0-ios/iossimulator-x64/resourcestamps/Microsoft.Maui.Graphics.stamp

@@ -20,6 +20,8 @@ public class Scene
     private readonly Dictionary<Guid, RectF> _worldBoundsCache = new();
 
     private readonly List<RectF> _dirtyRegions = new();
+    
+    public Action? InvalidateView { get; set; }
 
     public Scene(ISceneService sceneService)
     {
@@ -249,5 +251,7 @@ public class Scene
         
         foreach (var childId in childIds)
             InvalidateNode(childId);
+        
+        InvalidateView?.Invoke();
     }
 }
