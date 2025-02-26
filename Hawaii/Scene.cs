@@ -69,8 +69,28 @@ public class Scene
         _worldBoundsCache.Clear();
         _dirtyRegions.Clear();
     }
-
+    
+    public Vector2 GetGlobalPosition(Guid nodeId)
+    {
+        var transform = GetWorldTransform(nodeId);
+        return Vector2.Transform(Vector2.Zero, transform);
+    }
+    
     public Matrix3x2 GetWorldTransform(Guid nodeId)
+    {
+        Matrix3x2 transform = Matrix3x2.Identity;
+        var currentId = nodeId;
+
+        while (currentId != Guid.Empty) // Stop at no parent (RootNode)
+        {
+            transform = GetParentTransform(currentId) * transform;
+            currentId = HierarchyMap[currentId] ?? Guid.Empty;
+        }
+
+        return transform;
+    }
+
+    public Matrix3x2 GetParentTransform(Guid nodeId)
     {
         if (_worldTransformCache.TryGetValue(nodeId, out var transform)) 
             return transform;
@@ -96,7 +116,7 @@ public class Scene
                 Alignment.BottomRight => parentSize - nodeSize,
                 _ => Vector2.Zero
             };
-            adjustedPosition += alignmentOffset; // Add alignment offset to position
+            adjustedPosition += alignmentOffset;
         }
 
         if (node.Position == PositionMode.Fixed || node.Position == PositionMode.Absolute)
@@ -112,10 +132,10 @@ public class Scene
         else if (node.Position == PositionMode.Static)
         {
             transform = HierarchyMap[nodeId].HasValue
-                ? Matrix3x2.CreateTranslation(adjustedPosition) * GetWorldTransform(HierarchyMap[nodeId].Value)
+                ? Matrix3x2.CreateTranslation(adjustedPosition) * GetParentTransform(HierarchyMap[nodeId].Value)
                 : Matrix3x2.CreateTranslation(adjustedPosition);
         }
-        else // Relative
+        else
         {
             if (HierarchyMap[nodeId].HasValue)
             {
@@ -133,8 +153,22 @@ public class Scene
                     Anchor.BottomRight => new Vector2(parent.Size.Width, parent.Size.Height),
                     _ => Vector2.Zero
                 };
-                Vector2 childCenterOffset = new Vector2(node.Size.Width / 2, node.Size.Height / 2);
-                adjustedPosition += parentOffset - childCenterOffset;
+                
+                Vector2 childAnchorOffset = node.Center switch
+                {
+                    Anchor.TopLeft      => new Vector2(0, 0),
+                    Anchor.TopCenter    => new Vector2(node.Size.Width / 2, 0),
+                    Anchor.TopRight     => new Vector2(node.Size.Width, 0),
+                    Anchor.CenterLeft   => new Vector2(0, node.Size.Height / 2),
+                    Anchor.Center       => new Vector2(node.Size.Width / 2, node.Size.Height / 2),
+                    Anchor.CenterRight  => new Vector2(node.Size.Width, node.Size.Height / 2),
+                    Anchor.BottomLeft   => new Vector2(0, node.Size.Height),
+                    Anchor.BottomCenter => new Vector2(node.Size.Width / 2, node.Size.Height),
+                    Anchor.BottomRight  => new Vector2(node.Size.Width, node.Size.Height),
+                    _ => Vector2.Zero
+                };
+                
+                adjustedPosition += parentOffset - childAnchorOffset;
             }
 
             localMatrix = node.PropagateScale
@@ -145,7 +179,7 @@ public class Scene
                   Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f);
 
             transform = HierarchyMap[nodeId].HasValue
-                ? localMatrix * GetWorldTransform(HierarchyMap[nodeId].Value)
+                ? localMatrix * GetParentTransform(HierarchyMap[nodeId].Value)
                 : localMatrix;
         }
 
@@ -159,7 +193,7 @@ public class Scene
         {
             var node = Nodes[nodeId];
             var localBounds = node.GetLocalBounds();
-            var worldTransform = GetWorldTransform(nodeId);
+            var worldTransform = GetParentTransform(nodeId);
             var localScale = _sceneService.GetTransform(nodeId).Scale;
 
             // Scale bounds only if not propagated (since propagation is in world transform)

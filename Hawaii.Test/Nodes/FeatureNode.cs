@@ -16,6 +16,8 @@ public class FeatureNode : Node
     
     private readonly FeatureHandleNode _translationHandle;
 
+    public Scene Scene { get; set; }
+    
     public bool WasClicked { get; set; }
     
     public FeatureNode(ISceneService sceneService, FeatureHandleNode translationHandle, FeatureHandleNode rotationHandle)
@@ -37,6 +39,7 @@ public class FeatureNode : Node
         _translationHandle.Dragged += OnTranslationHandleDragged;
 
         _rotationHandle.Feature = this;
+        rotationHandle.Color = Colors.Aquamarine;
         _rotationHandle.Transform = new Transform
         {
             Position = new Vector2(0f, HANDLE_OFFSET),
@@ -84,12 +87,38 @@ public class FeatureNode : Node
     {
         _rotationHandle.WasClicked = !_rotationHandle.WasClicked;
     }
+
+    public Vector2 DebugCenter;
     
     private void OnRotationHandleDragged((TouchEventData touchData, PointF localDelta) e)
     {
-        Transform.Rotation = PointF.Zero.Angle(e.touchData.LocalPoint);
-        _sceneService.SetTransform(Id, Transform);
+        var transform = _sceneService.GetTransform(Id);
+        var worldTransform = Scene.GetParentTransform(Id);
+
+        var cursor = new Vector2(
+            e.touchData.WorldPoint.X,
+            e.touchData.WorldPoint.Y);
+
+        var featureCenter = Vector2.Transform(
+            new Vector2(Size.Width * 0.5f, Size.Height * 0.5f),
+            worldTransform);
+
+        var deltaX = cursor.X - featureCenter.X;
+        var deltaY = cursor.Y - featureCenter.Y;
+
+        var angleRadians = MathF.Atan2(deltaY, deltaX);
+        var angleDegrees = angleRadians * (180f / MathF.PI) - 90f;
+
+        transform.Rotation = angleDegrees;
+
+        _sceneService.SetTransform(Id, transform);
+
+        DebugCenter = new Vector2(
+            e.touchData.LocalPoint.X + _rotationHandle.Size.Height * 0.5f,
+            e.touchData.LocalPoint.Y + _rotationHandle.Size.Width * 0.5f + HANDLE_OFFSET
+        );
     }
+
 
     private class NodeRenderer : INodeRenderer
     {
@@ -100,6 +129,14 @@ public class FeatureNode : Node
             
             canvas.FillColor = featureNode.WasClicked ? Colors.Red : Colors.HotPink;
             canvas.FillEllipse(0f, 0f, node.Size.Width, node.Size.Height);
+            
+            canvas.DrawLine(featureNode.DebugCenter, new Point(featureNode.Size.Width * 0.5f, featureNode.Size.Height * 0.5f));
+
+            canvas.FillColor = Colors.Black;
+            canvas.FillCircle(new PointF(node.Size.Width * 0.5f, node.Size.Height * 0.5f), 10);
+            
+            canvas.FillColor = Colors.Green;
+            canvas.FillEllipse(featureNode.DebugCenter.X - 5, featureNode.DebugCenter.Y - 5, 10, 10);
         }
     }
 }

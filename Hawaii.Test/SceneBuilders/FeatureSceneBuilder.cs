@@ -28,13 +28,15 @@ public class FeatureSceneBuilder : ISceneBuilder
         {
             foreach (var feature in viewModel.Features)
             {
-                var marker = _serviceProvider.GetRequiredService<FeatureNode>();
-                scene.AddNode(marker, background.Id);
-                _sceneService.SetTransform(marker.Id, feature.Transform);
+                var featureNode = _serviceProvider.GetRequiredService<FeatureNode>();
+                featureNode.Scene = scene;
                 
-                foreach (var child in marker.Children)
+                scene.AddNode(featureNode, background.Id);
+                _sceneService.SetTransform(featureNode.Id, feature.Transform);
+                
+                foreach (var child in featureNode.Children)
                 {
-                    scene.AddNode(child, marker.Id);
+                    scene.AddNode(child, featureNode.Id);
                     _sceneService.SetTransform(child.Id, child.Transform);
                 }
             }

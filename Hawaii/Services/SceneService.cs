@@ -8,18 +8,14 @@ public class SceneService : ISceneService
 
     public Transform GetTransform(Guid id)
     {
-        if (_transforms.TryGetValue(id, out var transform))
-        {
-            return transform;
-        }
-        
-        var test = new Transform();
-        return test;
+        return _transforms.TryGetValue(id, out var transform)
+            ? transform 
+            : new Transform();
     }
 
     public void SetTransform(Guid id, Transform transform)
     {
-        _transforms[id] = transform ?? new Transform();
+        _transforms[id] = transform;
         TransformChanged?.Invoke(id);
     }
 

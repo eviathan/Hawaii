@@ -98,8 +98,6 @@ public class SceneRenderer : BindableObject, IDrawable
         if (combinedDirty.IsEmpty || _dispatcher.IsDragging())
             combinedDirty = dirtyRect;
         
-        Console.WriteLine($"Draw: combinedDirty = ({combinedDirty.X}, {combinedDirty.Y}, {combinedDirty.Width}, {combinedDirty.Height})");
-
         var orderedNodes = _scene.GetNodesInDrawOrder();
         
         foreach (var node in orderedNodes)
@@ -108,7 +106,7 @@ public class SceneRenderer : BindableObject, IDrawable
             
             if (bounds.IntersectsWith(combinedDirty))
             {
-                var transform = _scene.GetWorldTransform(node.Id);
+                var transform = _scene.GetParentTransform(node.Id);
                 var localScale = _sceneService.GetTransform(node.Id).Scale;
                 
                 canvas.SaveState();
@@ -125,7 +123,7 @@ public class SceneRenderer : BindableObject, IDrawable
     
     private PointF TransformToWorld(PointF screenPoint)
     {
-        if (Matrix3x2.Invert(_scene.GetWorldTransform(_scene.RootNode.Id), out var inverse))
+        if (Matrix3x2.Invert(_scene.GetParentTransform(_scene.RootNode.Id), out var inverse))
         {
             var worldVec = Vector2.Transform(new Vector2(screenPoint.X, screenPoint.Y), inverse);
             return new PointF(worldVec.X, worldVec.Y);

@@ -11,6 +11,8 @@ public class FeatureHandleNode : Node
     
     public FeatureNode Feature { get; set; }
 
+    public Color Color { get; set; } = Colors.Black;
+
     public bool WasClicked { get; set; }
 
     public event Action<TouchEventData> Clicked;
@@ -43,8 +45,8 @@ public class FeatureHandleNode : Node
         {
             if (node is not FeatureHandleNode featureHandleNode)
                 return;
-            
-            canvas.FillColor = featureHandleNode.WasClicked ? Colors.Blue : Colors.Yellow;
+
+            canvas.FillColor = featureHandleNode.Color;
             canvas.FillEllipse(0f, 0f, node.Size.Width, node.Size.Height);
         }
     }

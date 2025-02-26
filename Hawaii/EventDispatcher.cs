@@ -51,6 +51,7 @@ public class EventDispatcher
             {
                 PropagateEvent(worldPoint, (node, touchData) =>
                 {
+                    Console.WriteLine($"WorldPoint: ({worldPoint.X}, {worldPoint.Y})");
                     var localDelta = TransformDeltaToLocal(node, delta);
                     if (node.OnDrag(touchData, localDelta))
                     {
@@ -136,8 +137,6 @@ public class EventDispatcher
         {
             var worldBounds = _scene.GetWorldBounds(node.Id);
             
-            Console.WriteLine($"Hit Test: Node = {node.GetType().Name} (ID: {node.Id}), Bounds = ({worldBounds.X}, {worldBounds.Y}, {worldBounds.Width}, {worldBounds.Height}), Point = ({worldPoint.X}, {worldPoint.Y})");
-            
             if (worldBounds.Contains(worldPoint))
             {
                 var localPoint = TransformToLocal(node, worldPoint);
@@ -212,7 +211,7 @@ public class EventDispatcher
     // TODO: Maybe move these outside of this class
     private PointF TransformToLocal(Node node, PointF worldPoint)
     {
-        if (Matrix3x2.Invert(_scene.GetWorldTransform(node.Id), out var inverse))
+        if (Matrix3x2.Invert(_scene.GetParentTransform(node.Id), out var inverse))
         {
             var localPoint = Vector2.Transform(new Vector2(worldPoint.X, worldPoint.Y), inverse);
             return new PointF(localPoint.X, localPoint.Y);
@@ -223,7 +222,7 @@ public class EventDispatcher
     
     private PointF TransformDeltaToLocal(Node node, PointF worldDelta)
     {
-        if (Matrix3x2.Invert(_scene.GetWorldTransform(node.Id), out var inverse))
+        if (Matrix3x2.Invert(_scene.GetParentTransform(node.Id), out var inverse))
         {
             var deltaVec = Vector2.Transform(new Vector2(worldDelta.X, worldDelta.Y), inverse);
             var originVec = Vector2.Transform(Vector2.Zero, inverse);
