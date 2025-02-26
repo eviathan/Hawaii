@@ -16,14 +16,20 @@ public class FeatureHandleNode : Node
     public override bool OnClicked(TouchEventData touchData)
     {
         Console.WriteLine($"Clicked at Local: {touchData.LocalPoint}, World: {touchData.WorldPoint}");
+        WasClicked = !WasClicked;
         return true;
     }
+    
+    public bool WasClicked { get; set; }
 
     private class NodeRenderer : INodeRenderer
     {
         public void Draw(ICanvas canvas, Node node, RectF dirtyRect)
         {
-            canvas.FillColor = Colors.Blue;
+            if (node is not FeatureHandleNode featureHandleNode)
+                return;
+            
+            canvas.FillColor = featureHandleNode.WasClicked ? Colors.Blue : Colors.Yellow;
             canvas.FillEllipse(0f, 0f, node.Size.Width, node.Size.Height);
         }
     }

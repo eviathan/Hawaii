@@ -17,164 +17,184 @@ public class EventDispatcher
     private (PointF A, PointF B)? _lastTwoPoints;
     
     private DateTime _singleTouchStartTime;
+    
+    private Node _draggedNode;
 
+    public bool IsDragging() => _draggedNode != null;
+    
     public EventDispatcher(Scene scene)
     {
         _scene = scene;
     }
     
     public void HandleSingleTouchDown(PointF worldPoint)
+    {
+        _lastSinglePoint = worldPoint;
+        _singleTouchStartTime = DateTime.Now;
+        PropagateEvent(worldPoint, (node, touchData) => node.OnClicked(touchData));
+    }
+
+    public void HandleSingleTouchMove(PointF worldPoint)
+    {
+        if (!_lastSinglePoint.HasValue) return;
+        var delta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
+        var timeElapsed = (DateTime.Now - _singleTouchStartTime).TotalMilliseconds;
+        if (timeElapsed > ClickThresholdInMs || delta.Length() > DragThresholdInPixels)
         {
-            _lastSinglePoint = worldPoint;
-            _singleTouchStartTime = DateTime.Now;
-        }
-
-        public void HandleSingleTouchMove(PointF worldPoint)
-        {
-            if (!_lastSinglePoint.HasValue) return;
-
-            var delta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
-            var timeElapsed = (DateTime.Now - _singleTouchStartTime).TotalMilliseconds;
-
-            if (timeElapsed > ClickThresholdInMs || delta.Length() > DragThresholdInPixels)
+            if (_draggedNode == null)
             {
                 PropagateEvent(worldPoint, (node, touchData) =>
                 {
                     var localDelta = TransformDeltaToLocal(node, delta);
-                    return node.OnDrag(touchData, localDelta);
+                    if (node.OnDrag(touchData, localDelta))
+                    {
+                        _draggedNode = node; // Lock onto first drag
+                        return true;
+                    }
+                    return false;
                 });
-                _lastSinglePoint = worldPoint;
-                _scene.InvalidateView?.Invoke();
             }
-        }
-
-        public void HandleSingleTouchUp(PointF worldPoint)
-        {
-            if (_lastSinglePoint.HasValue)
+            else
             {
-                var timeElapsed = (DateTime.Now - _singleTouchStartTime).TotalMilliseconds;
-                var delta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
-
-                if (timeElapsed <= ClickThresholdInMs && delta.Length() <= DragThresholdInPixels)
-                    PropagateEvent(worldPoint, (node, touchData) => node.OnClicked(touchData));
+                var touchData = new TouchEventData(worldPoint, TransformToLocal(_draggedNode, worldPoint));
+                var localDelta = TransformDeltaToLocal(_draggedNode, delta);
+                _draggedNode.OnDrag(touchData, localDelta);
             }
-            _lastSinglePoint = null;
-        }
-
-        public void HandleTwoFingerDown(PointF pointA, PointF pointB)
-        {
-            _lastTwoPoints = (pointA, pointB);
-            PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerClicked(gestureData));
-        }
-
-        public void HandleTwoFingerMove(PointF pointA, PointF pointB)
-        {
-            _lastTwoPoints = (pointA, pointB);
-            // Gesture recognition in SceneRenderer
-        }
-
-        public void HandleTwoFingerPan(PointF pointA, PointF pointB, PointF delta)
-        {
-            PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerDrag(gestureData));
+            _lastSinglePoint = worldPoint;
             _scene.InvalidateView?.Invoke();
         }
+    }
 
-        public void HandleTwoFingerPinch(PointF pointA, PointF pointB, float scaleFactor)
+    public void HandleSingleTouchUp(PointF worldPoint)
+    {
+        if (_lastSinglePoint.HasValue)
         {
-            PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnPinch(gestureData));
-            _scene.InvalidateView?.Invoke();
+            var timeElapsed = (DateTime.Now - _singleTouchStartTime).TotalMilliseconds;
+            var delta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
+
+            if (timeElapsed <= ClickThresholdInMs && delta.Length() <= DragThresholdInPixels)
+                PropagateEvent(worldPoint, (node, touchData) => node.OnClicked(touchData));
         }
+        _lastSinglePoint = null;
+        _draggedNode = null;
+    }
 
-        public void HandleTwoFingerRotate(PointF pointA, PointF pointB, float angle)
-        {
-            PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnRotate(gestureData));
-            _scene.InvalidateView?.Invoke();
-        }
+    public void HandleTwoFingerDown(PointF pointA, PointF pointB)
+    {
+        _lastTwoPoints = (pointA, pointB);
+        PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerClicked(gestureData));
+    }
 
-        public void HandleTwoFingerUp(PointF pointA, PointF pointB)
-        {
-            _lastTwoPoints = null;
-        }
+    public void HandleTwoFingerMove(PointF pointA, PointF pointB)
+    {
+        _lastTwoPoints = (pointA, pointB);
+        // Gesture recognition in SceneRenderer
+    }
 
-        private void PropagateEvent(PointF worldPoint, Func<Node, TouchEventData, bool> handler)
+    public void HandleTwoFingerPan(PointF pointA, PointF pointB, PointF delta)
+    {
+        PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerDrag(gestureData));
+        _scene.InvalidateView?.Invoke();
+    }
+
+    public void HandleTwoFingerPinch(PointF pointA, PointF pointB, float scaleFactor)
+    {
+        PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnPinch(gestureData));
+        _scene.InvalidateView?.Invoke();
+    }
+
+    public void HandleTwoFingerRotate(PointF pointA, PointF pointB, float angle)
+    {
+        PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnRotate(gestureData));
+        _scene.InvalidateView?.Invoke();
+    }
+
+    public void HandleTwoFingerUp(PointF pointA, PointF pointB)
+    {
+        _lastTwoPoints = null;
+    }
+
+    private void PropagateEvent(PointF worldPoint, Func<Node, TouchEventData, bool> handler)
+    {
+        var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
+        
+        foreach (var node in orderedNodes)
         {
-            var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
+            var worldBounds = _scene.GetWorldBounds(node.Id);
             
-            foreach (var node in orderedNodes)
-            {
-                var worldBounds = _scene.GetWorldBounds(node.Id);
-                
-                if (worldBounds.Contains(worldPoint))
-                {
-                    var localPoint = TransformToLocal(node, worldPoint);
-                    
-                    if (node.GetLocalBounds().Contains(localPoint))
-                    {
-                        var touchData = new TouchEventData(worldPoint, localPoint);
-                        if (handler(node, touchData))
-                            break;
-                    }
-                }
-            }
-        }
-
-        private void PropagateTwoFingerEvent(PointF pointA, PointF pointB, Func<Node, GestureEventData, bool> handler)
-        {
-            var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
+            Console.WriteLine($"Hit Test: Node = {node.GetType().Name} (ID: {node.Id}), Bounds = ({worldBounds.X}, {worldBounds.Y}, {worldBounds.Width}, {worldBounds.Height}), Point = ({worldPoint.X}, {worldPoint.Y})");
             
-            foreach (var node in orderedNodes)
+            if (worldBounds.Contains(worldPoint))
             {
-                var worldBounds = _scene.GetWorldBounds(node.Id);
+                var localPoint = TransformToLocal(node, worldPoint);
                 
-                if (worldBounds.Contains(pointA) || worldBounds.Contains(pointB))
+                if (node.GetLocalBounds().Contains(localPoint))
                 {
-                    var localA = TransformToLocal(node, pointA);
-                    var localB = TransformToLocal(node, pointB);
-                    
-                    if (node.GetLocalBounds().Contains(localA) || node.GetLocalBounds().Contains(localB))
-                    {
-                        var gestureData = new GestureEventData(
-                            new TouchEventData(pointA, localA),
-                            new TouchEventData(pointB, localB));
-                        
-                        if (handler(node, gestureData))
-                            break;
-                    }
+                    var touchData = new TouchEventData(worldPoint, localPoint);
+                    if (handler(node, touchData))
+                        break;
                 }
             }
         }
+    }
 
-        // Overload for gestures with additional data
-        private void PropagateTwoFingerEvent(PointF pointA, PointF pointB, PointF? delta, float? scaleFactor, float? angle, Func<Node, GestureEventData, bool> handler)
+    private void PropagateTwoFingerEvent(PointF pointA, PointF pointB, Func<Node, GestureEventData, bool> handler)
+    {
+        var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
+        
+        foreach (var node in orderedNodes)
         {
-            foreach (var node in GetNodesInHitTestOrder(_scene.RootNode))
+            var worldBounds = _scene.GetWorldBounds(node.Id);
+            
+            if (worldBounds.Contains(pointA) || worldBounds.Contains(pointB))
             {
-                var worldBounds = _scene.GetWorldBounds(node.Id);
+                var localA = TransformToLocal(node, pointA);
+                var localB = TransformToLocal(node, pointB);
                 
-                if (worldBounds.Contains(pointA) || worldBounds.Contains(pointB))
+                if (node.GetLocalBounds().Contains(localA) || node.GetLocalBounds().Contains(localB))
                 {
-                    var localA = TransformToLocal(node, pointA);
-                    var localB = TransformToLocal(node, pointB);
+                    var gestureData = new GestureEventData(
+                        new TouchEventData(pointA, localA),
+                        new TouchEventData(pointB, localB));
                     
-                    if (node.GetLocalBounds().Contains(localA) || node.GetLocalBounds().Contains(localB))
-                    {
-                        PointF? localDelta = delta.HasValue 
-                            ? TransformDeltaToLocal(node, delta.Value) 
-                            : null;
-                        
-                        var gestureData = new GestureEventData(
-                            new TouchEventData(pointA, localA),
-                            new TouchEventData(pointB, localB),
-                            localDelta,
-                            scaleFactor,
-                            angle
-                        );
-                        if (handler(node, gestureData))
-                            break;
-                    }
+                    if (handler(node, gestureData))
+                        break;
                 }
             }
         }
+    }
+
+    // Overload for gestures with additional data
+    private void PropagateTwoFingerEvent(PointF pointA, PointF pointB, PointF? delta, float? scaleFactor, float? angle, Func<Node, GestureEventData, bool> handler)
+    {
+        foreach (var node in GetNodesInHitTestOrder(_scene.RootNode))
+        {
+            var worldBounds = _scene.GetWorldBounds(node.Id);
+            
+            if (worldBounds.Contains(pointA) || worldBounds.Contains(pointB))
+            {
+                var localA = TransformToLocal(node, pointA);
+                var localB = TransformToLocal(node, pointB);
+                
+                if (node.GetLocalBounds().Contains(localA) || node.GetLocalBounds().Contains(localB))
+                {
+                    PointF? localDelta = delta.HasValue 
+                        ? TransformDeltaToLocal(node, delta.Value) 
+                        : null;
+                    
+                    var gestureData = new GestureEventData(
+                        new TouchEventData(pointA, localA),
+                        new TouchEventData(pointB, localB),
+                        localDelta,
+                        scaleFactor,
+                        angle
+                    );
+                    if (handler(node, gestureData))
+                        break;
+                }
+            }
+        }
+    }
 
     private IEnumerable<Node> GetNodesInHitTestOrder(Node root)
     {

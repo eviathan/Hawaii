@@ -94,8 +94,11 @@ public class SceneRenderer : BindableObject, IDrawable
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var combinedDirty = _scene.GetDirtyRegion();
-        if (combinedDirty.IsEmpty)
+        
+        if (combinedDirty.IsEmpty || _dispatcher.IsDragging())
             combinedDirty = dirtyRect;
+        
+        Console.WriteLine($"Draw: combinedDirty = ({combinedDirty.X}, {combinedDirty.Y}, {combinedDirty.Width}, {combinedDirty.Height})");
 
         var orderedNodes = _scene.GetNodesInDrawOrder();
         

@@ -8,9 +8,15 @@ namespace Hawaii.Test.Nodes;
 public class FeatureNode : Node
 {
     public const float HANDLE_OFFSET = 100f;
+
+    private readonly ISceneService _sceneService;
     
-    public FeatureNode()
+    public bool WasClicked { get; set; }
+    
+    public FeatureNode(ISceneService sceneService)
     {
+        _sceneService = sceneService ?? throw new ArgumentNullException(nameof(sceneService));
+        
         Renderer = new NodeRenderer();
         Size = new SizeF(100, 100);
         Center = Anchor.Center;
@@ -36,19 +42,18 @@ public class FeatureNode : Node
     public override bool OnClicked(TouchEventData touchData)
     {
         Console.WriteLine($"Clicked at Local: {touchData.LocalPoint}, World: {touchData.WorldPoint}");
-        WasClicked = !WasClicked;
+        WasClicked = true;
         return true;
     }
 
-    // public override bool OnDrag(TouchEventData touchData, PointF localDelta)
-    // {
-    //     var transform = _sceneService.GetTransform(Id);
-    //     transform.Position += new Vector2(localDelta.X, localDelta.Y);
-    //     _sceneService.SetTransform(Id, transform);
-    //     return true;
-    // }
-
-    public bool WasClicked { get; set; }
+    public override bool OnDrag(TouchEventData touchData, PointF localDelta)
+    {
+        var transform = _sceneService.GetTransform(Id);
+        transform.Position += new Vector2(localDelta.X, localDelta.Y);
+        _sceneService.SetTransform(Id, transform);
+        
+        return true;
+    }
 
     private class NodeRenderer : INodeRenderer
     {
