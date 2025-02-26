@@ -1,3 +1,4 @@
+using Hawaii.Enums;
 using Hawaii.Interfaces;
 
 namespace Hawaii.Test.Nodes;
@@ -8,6 +9,9 @@ public class ImageNode : Node
     {
         PropagateScale = true;
         Renderer = new NodeRenderer();
+        Position = PositionMode.Absolute;
+        Center = Anchor.TopLeft;
+        Alignment = Alignment.Center;
         Size = new SizeF(640, 400);
     }
 

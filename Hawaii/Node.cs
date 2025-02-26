@@ -1,3 +1,4 @@
+using Hawaii.Enums;
 using Hawaii.Interfaces;
 
 namespace Hawaii;
@@ -7,10 +8,18 @@ public class Node
     public Guid Id { get; } = Guid.NewGuid();
     
     public INodeState State { get; set; }
-
+    
     public bool PropagateScale { get; set; }
+    
     public SizeF Size { get; set; }
+    
     public Transform Transform { get; set; } = new();
+
+    public Anchor Center { get; set; } = Anchor.TopLeft;
+
+    public Alignment Alignment { get; set; } = Alignment.None;
+
+    public PositionMode Position { get; set; } = PositionMode.Relative;
 
     public List<Node> Children { get; set; } = [];
 

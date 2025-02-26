@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Hawaii.Test")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+8d7251b6ef53ed39df1d82b0c675ea1a594cd28c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+84b3f965e961666e7b949b20883e2db61b499eec")]
 [assembly: System.Reflection.AssemblyProductAttribute("Hawaii.Test")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Hawaii.Test")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

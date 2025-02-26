@@ -1,4 +1,5 @@
 using System.Numerics;
+using Hawaii.Enums;
 using Hawaii.Interfaces;
 using Hawaii.Nodes;
 
@@ -72,18 +73,80 @@ public class Scene
         if (_worldTransformCache.TryGetValue(nodeId, out var transform)) 
             return transform;
         
-        var local = _sceneService.GetTransform(nodeId);
+        var local = _sceneService.GetTransform(nodeId) ?? new Transform();
         var node = Nodes[nodeId];
-        var localMatrix = node.PropagateScale
-            ? Matrix3x2.CreateScale(local.Scale) *
-              Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
-              Matrix3x2.CreateTranslation(local.Position)
-            : Matrix3x2.CreateTranslation(local.Position) *
-              Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f);
+        
+        Vector2 adjustedPosition = local.Position;
+        Matrix3x2 localMatrix;
 
-        transform = HierarchyMap[nodeId].HasValue
-            ? localMatrix * GetWorldTransform(HierarchyMap[nodeId].Value)
-            : localMatrix;
+        // Apply alignment if not root
+        if (HierarchyMap[nodeId].HasValue && node.Alignment != Alignment.None)
+        {
+            var parent = Nodes[HierarchyMap[nodeId].Value];
+            Vector2 parentSize = new Vector2(parent.Size.Width, parent.Size.Height);
+            Vector2 nodeSize = new Vector2(node.Size.Width, node.Size.Height);
+            Vector2 alignmentOffset = node.Alignment switch
+            {
+                Alignment.Center => (parentSize - nodeSize) / 2,
+                Alignment.TopLeft => Vector2.Zero,
+                Alignment.TopRight => new Vector2(parentSize.X - nodeSize.X, 0),
+                Alignment.BottomLeft => new Vector2(0, parentSize.Y - nodeSize.Y),
+                Alignment.BottomRight => parentSize - nodeSize,
+                _ => Vector2.Zero
+            };
+            adjustedPosition += alignmentOffset; // Add alignment offset to position
+        }
+
+        if (node.Position == PositionMode.Fixed || node.Position == PositionMode.Absolute)
+        {
+            localMatrix = node.PropagateScale
+                ? Matrix3x2.CreateScale(local.Scale) *
+                  Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
+                  Matrix3x2.CreateTranslation(adjustedPosition)
+                : Matrix3x2.CreateTranslation(adjustedPosition) *
+                  Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f);
+            transform = localMatrix;
+        }
+        else if (node.Position == PositionMode.Static)
+        {
+            transform = HierarchyMap[nodeId].HasValue
+                ? Matrix3x2.CreateTranslation(adjustedPosition) * GetWorldTransform(HierarchyMap[nodeId].Value)
+                : Matrix3x2.CreateTranslation(adjustedPosition);
+        }
+        else // Relative
+        {
+            if (HierarchyMap[nodeId].HasValue)
+            {
+                var parent = Nodes[HierarchyMap[nodeId].Value];
+                Vector2 parentOffset = parent.Center switch
+                {
+                    Anchor.TopLeft => Vector2.Zero,
+                    Anchor.TopCenter => new Vector2(parent.Size.Width / 2, 0),
+                    Anchor.TopRight => new Vector2(parent.Size.Width, 0),
+                    Anchor.CenterLeft => new Vector2(0, parent.Size.Height / 2),
+                    Anchor.Center => new Vector2(parent.Size.Width / 2, parent.Size.Height / 2),
+                    Anchor.CenterRight => new Vector2(parent.Size.Width, parent.Size.Height / 2),
+                    Anchor.BottomLeft => new Vector2(0, parent.Size.Height),
+                    Anchor.BottomCenter => new Vector2(parent.Size.Width / 2, parent.Size.Height),
+                    Anchor.BottomRight => new Vector2(parent.Size.Width, parent.Size.Height),
+                    _ => Vector2.Zero
+                };
+                Vector2 childCenterOffset = new Vector2(node.Size.Width / 2, node.Size.Height / 2);
+                adjustedPosition += parentOffset - childCenterOffset;
+            }
+
+            localMatrix = node.PropagateScale
+                ? Matrix3x2.CreateScale(local.Scale) *
+                  Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
+                  Matrix3x2.CreateTranslation(adjustedPosition)
+                : Matrix3x2.CreateTranslation(adjustedPosition) *
+                  Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f);
+
+            transform = HierarchyMap[nodeId].HasValue
+                ? localMatrix * GetWorldTransform(HierarchyMap[nodeId].Value)
+                : localMatrix;
+        }
+
         _worldTransformCache[nodeId] = transform;
         return transform;
     }

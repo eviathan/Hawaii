@@ -8,23 +8,23 @@ public class FeaturesViewModel : INodeState
 {
     public List<Feature> Features { get; set; } = 
     [
-        new()
+        new Feature
         {
             Name = "Feature 1",
             Transform = new Transform
             {
-                Position = new Vector2(12, 45)
+                Position = new Vector2(100, 100)
             }
         },
-        new()
+        new Feature
         {
             Name = "Feature 2",
             Transform = new Transform
             {
-                Position = new Vector2(120, 45)
+                Position = new Vector2(400, 300)
             }
         },
-        new()
+        new Feature
         {
             Name = "Feature 3",
             Transform = new Transform

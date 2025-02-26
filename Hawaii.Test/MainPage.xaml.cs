@@ -8,20 +8,7 @@ public partial class MainPage : ContentPage
 	public MainPage()
 	{
 		InitializeComponent();
-		BindingContext = new FeaturesViewModel
-		{
-			Features = 
-			[
-				new Feature()
-				{
-					Name = "Feature 1",
-				},
-				new Feature()
-				{
-					Name = "Feature 2",
-				},
-			]
-		};
+		BindingContext = new FeaturesViewModel();
 	}
 }
 
