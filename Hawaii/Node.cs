@@ -27,14 +27,18 @@ public class Node
     public INodeRenderer Renderer { get; set; }
     
     public virtual RectF GetLocalBounds() => new RectF(0f, 0f, Size.Width, Size.Height);
-
+    
+    public void AddChild(Node child) =>
+        Children.Add(child);
+    
+    #region Events
     public virtual bool OnClicked(TouchEventData touchData) => false;
     public virtual bool OnDrag(TouchEventData touchData, PointF localDelta) => false;
+    public virtual bool OnTouchUp(TouchEventData touchData) => false;
     public virtual bool OnTwoFingerClicked(GestureEventData gestureData) => false;
     public virtual bool OnTwoFingerDrag(GestureEventData gestureData) => false;
     public virtual bool OnPinch(GestureEventData gestureData) => false;
     public virtual bool OnRotate(GestureEventData gestureData) => false;
-
-    public void AddChild(Node child) =>
-        Children.Add(child);
+    public virtual bool OnTwoFingerTouchUp(GestureEventData gestureData) => false;
+    #endregion
 } 

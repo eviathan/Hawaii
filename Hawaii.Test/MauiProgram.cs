@@ -27,6 +27,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<SceneRenderer>();
 		builder.Services.AddTransient<FeatureSceneBuilder>();
 		builder.Services.AddTransient<FeatureNode>();
+		builder.Services.AddTransient<FeatureHandleNode>();
 		builder.Services.AddTransient<ImageNode>();
 		
 		return builder.Build();

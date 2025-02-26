@@ -6,9 +6,9 @@ namespace Hawaii;
 
 public class EventDispatcher
 {
-    private const float ClickThresholdInMs = 200f;
+    private const float CLICK_THRESHOLD_IN_MS = 200f;
     
-    private const float DragThresholdInPixels = 5f;
+    private const float DRAG_THRESHHOLD_IN_PIXELS = 5f;
     
     private readonly Scene _scene;
     
@@ -19,6 +19,8 @@ public class EventDispatcher
     private DateTime _singleTouchStartTime;
     
     private Node _draggedNode;
+    
+    private Node _twoFingerDraggedNode;
 
     public bool IsDragging() => _draggedNode != null;
     
@@ -32,14 +34,18 @@ public class EventDispatcher
         _lastSinglePoint = worldPoint;
         _singleTouchStartTime = DateTime.Now;
         PropagateEvent(worldPoint, (node, touchData) => node.OnClicked(touchData));
+        _scene.InvalidateView?.Invoke();
     }
 
     public void HandleSingleTouchMove(PointF worldPoint)
     {
-        if (!_lastSinglePoint.HasValue) return;
+        if (!_lastSinglePoint.HasValue)
+            return;
+        
         var delta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
         var timeElapsed = (DateTime.Now - _singleTouchStartTime).TotalMilliseconds;
-        if (timeElapsed > ClickThresholdInMs || delta.Length() > DragThresholdInPixels)
+        
+        if (timeElapsed > CLICK_THRESHOLD_IN_MS || delta.Length() > DRAG_THRESHHOLD_IN_PIXELS)
         {
             if (_draggedNode == null)
             {
@@ -48,7 +54,7 @@ public class EventDispatcher
                     var localDelta = TransformDeltaToLocal(node, delta);
                     if (node.OnDrag(touchData, localDelta))
                     {
-                        _draggedNode = node; // Lock onto first drag
+                        _draggedNode = node;
                         return true;
                     }
                     return false;
@@ -58,8 +64,10 @@ public class EventDispatcher
             {
                 var touchData = new TouchEventData(worldPoint, TransformToLocal(_draggedNode, worldPoint));
                 var localDelta = TransformDeltaToLocal(_draggedNode, delta);
+                
                 _draggedNode.OnDrag(touchData, localDelta);
             }
+            
             _lastSinglePoint = worldPoint;
             _scene.InvalidateView?.Invoke();
         }
@@ -72,23 +80,23 @@ public class EventDispatcher
             var timeElapsed = (DateTime.Now - _singleTouchStartTime).TotalMilliseconds;
             var delta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
 
-            if (timeElapsed <= ClickThresholdInMs && delta.Length() <= DragThresholdInPixels)
+            if (timeElapsed <= CLICK_THRESHOLD_IN_MS && delta.Length() <= DRAG_THRESHHOLD_IN_PIXELS)
                 PropagateEvent(worldPoint, (node, touchData) => node.OnClicked(touchData));
+            
+            PropagateEvent(worldPoint, (node, touchData) =>
+                node.OnTouchUp(touchData));
         }
+        
         _lastSinglePoint = null;
         _draggedNode = null;
+        _scene.InvalidateView?.Invoke();
     }
 
     public void HandleTwoFingerDown(PointF pointA, PointF pointB)
     {
         _lastTwoPoints = (pointA, pointB);
         PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerClicked(gestureData));
-    }
-
-    public void HandleTwoFingerMove(PointF pointA, PointF pointB)
-    {
-        _lastTwoPoints = (pointA, pointB);
-        // Gesture recognition in SceneRenderer
+        _scene.InvalidateView?.Invoke();
     }
 
     public void HandleTwoFingerPan(PointF pointA, PointF pointB, PointF delta)
@@ -111,7 +119,13 @@ public class EventDispatcher
 
     public void HandleTwoFingerUp(PointF pointA, PointF pointB)
     {
+        if (_lastTwoPoints.HasValue)
+        {
+            PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerTouchUp(gestureData));
+        }
+        
         _lastTwoPoints = null;
+        _scene.InvalidateView?.Invoke();
     }
 
     private void PropagateEvent(PointF worldPoint, Func<Node, TouchEventData, bool> handler)
@@ -164,38 +178,6 @@ public class EventDispatcher
         }
     }
 
-    // Overload for gestures with additional data
-    private void PropagateTwoFingerEvent(PointF pointA, PointF pointB, PointF? delta, float? scaleFactor, float? angle, Func<Node, GestureEventData, bool> handler)
-    {
-        foreach (var node in GetNodesInHitTestOrder(_scene.RootNode))
-        {
-            var worldBounds = _scene.GetWorldBounds(node.Id);
-            
-            if (worldBounds.Contains(pointA) || worldBounds.Contains(pointB))
-            {
-                var localA = TransformToLocal(node, pointA);
-                var localB = TransformToLocal(node, pointB);
-                
-                if (node.GetLocalBounds().Contains(localA) || node.GetLocalBounds().Contains(localB))
-                {
-                    PointF? localDelta = delta.HasValue 
-                        ? TransformDeltaToLocal(node, delta.Value) 
-                        : null;
-                    
-                    var gestureData = new GestureEventData(
-                        new TouchEventData(pointA, localA),
-                        new TouchEventData(pointB, localB),
-                        localDelta,
-                        scaleFactor,
-                        angle
-                    );
-                    if (handler(node, gestureData))
-                        break;
-                }
-            }
-        }
-    }
-
     private IEnumerable<Node> GetNodesInHitTestOrder(Node root)
     {
         var stack = new Stack<(Node node, bool processedChildren)>();
@@ -227,6 +209,7 @@ public class EventDispatcher
         }
     }
 
+    // TODO: Maybe move these outside of this class
     private PointF TransformToLocal(Node node, PointF worldPoint)
     {
         if (Matrix3x2.Invert(_scene.GetWorldTransform(node.Id), out var inverse))

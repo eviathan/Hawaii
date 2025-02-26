@@ -1,3 +1,4 @@
+using System.Numerics;
 using Hawaii.Enums;
 using Hawaii.EventData;
 using Hawaii.Interfaces;
@@ -6,8 +7,19 @@ namespace Hawaii.Test.Nodes;
 
 public class FeatureHandleNode : Node
 {
-    public FeatureHandleNode()
+    private readonly ISceneService _sceneService;
+    
+    public FeatureNode Feature { get; set; }
+
+    public bool WasClicked { get; set; }
+
+    public event Action<TouchEventData> Clicked;
+    
+    public event Action<(TouchEventData touchData, PointF localDelta)> Dragged;
+
+    public FeatureHandleNode(ISceneService sceneService)
     {
+        _sceneService = sceneService ?? throw new ArgumentNullException(nameof(sceneService));
         Renderer = new NodeRenderer();
         Center = Anchor.Center;
         Size = new SizeF(50, 50);
@@ -15,13 +27,16 @@ public class FeatureHandleNode : Node
 
     public override bool OnClicked(TouchEventData touchData)
     {
-        Console.WriteLine($"Clicked at Local: {touchData.LocalPoint}, World: {touchData.WorldPoint}");
-        WasClicked = !WasClicked;
+        Clicked?.Invoke(touchData);
         return true;
     }
     
-    public bool WasClicked { get; set; }
-
+    public override bool OnDrag(TouchEventData touchData, PointF localDelta)
+    {
+        Dragged?.Invoke((touchData, localDelta));
+        return true;
+    }
+    
     private class NodeRenderer : INodeRenderer
     {
         public void Draw(ICanvas canvas, Node node, RectF dirtyRect)
