@@ -1,4 +1,5 @@
 using System.Numerics;
+using Hawaii.Enums;
 using Hawaii.EventData;
 using Hawaii.Extensions;
 
@@ -41,10 +42,10 @@ public class EventDispatcher
     {
         if (!_lastSinglePoint.HasValue)
             return;
-        
+    
         var delta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
         var timeElapsed = (DateTime.Now - _singleTouchStartTime).TotalMilliseconds;
-        
+    
         if (timeElapsed > CLICK_THRESHOLD_IN_MS || delta.Length() > DRAG_THRESHHOLD_IN_PIXELS)
         {
             if (_draggedNode == null)
@@ -63,12 +64,18 @@ public class EventDispatcher
             }
             else
             {
-                var touchData = new TouchEventData(worldPoint, TransformToLocal(_draggedNode, worldPoint));
+                PointF parentPoint = worldPoint;
+                if (_scene.HierarchyMap[_draggedNode.Id].HasValue)
+                {
+                    var parent = _scene.Nodes[_scene.HierarchyMap[_draggedNode.Id].Value];
+                    parentPoint = TransformToLocal(parent, worldPoint);
+                }
+                var touchData = new TouchEventData(worldPoint, parentPoint, TransformToLocal(_draggedNode, worldPoint));
                 var localDelta = TransformDeltaToLocal(_draggedNode, delta);
-                
+            
                 _draggedNode.OnDrag(touchData, localDelta);
             }
-            
+        
             _lastSinglePoint = worldPoint;
             _scene.InvalidateView?.Invoke();
         }
@@ -132,18 +139,24 @@ public class EventDispatcher
     private void PropagateEvent(PointF worldPoint, Func<Node, TouchEventData, bool> handler)
     {
         var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
-        
+    
         foreach (var node in orderedNodes)
         {
             var worldBounds = _scene.GetWorldBounds(node.Id);
-            
+        
             if (worldBounds.Contains(worldPoint))
             {
                 var localPoint = TransformToLocal(node, worldPoint);
-                
-                if (node.GetLocalBounds().Contains(localPoint))
+            
+                if (node.ContainsLocalPoint(localPoint))
                 {
-                    var touchData = new TouchEventData(worldPoint, localPoint);
+                    PointF parentPoint = worldPoint;
+                    if (_scene.HierarchyMap[node.Id].HasValue)
+                    {
+                        var parent = _scene.Nodes[_scene.HierarchyMap[node.Id].Value];
+                        parentPoint = TransformToLocal(parent, worldPoint);
+                    }
+                    var touchData = new TouchEventData(worldPoint, parentPoint, localPoint);
                     if (handler(node, touchData))
                         break;
                 }
@@ -154,22 +167,30 @@ public class EventDispatcher
     private void PropagateTwoFingerEvent(PointF pointA, PointF pointB, Func<Node, GestureEventData, bool> handler)
     {
         var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
-        
+    
         foreach (var node in orderedNodes)
         {
             var worldBounds = _scene.GetWorldBounds(node.Id);
-            
+        
             if (worldBounds.Contains(pointA) || worldBounds.Contains(pointB))
             {
                 var localA = TransformToLocal(node, pointA);
                 var localB = TransformToLocal(node, pointB);
-                
-                if (node.GetLocalBounds().Contains(localA) || node.GetLocalBounds().Contains(localB))
+            
+                if (node.ContainsLocalPoint(localA) || node.ContainsLocalPoint(localB))
                 {
+                    PointF parentPointA = pointA;
+                    PointF parentPointB = pointB;
+                    if (_scene.HierarchyMap[node.Id].HasValue)
+                    {
+                        var parent = _scene.Nodes[_scene.HierarchyMap[node.Id].Value];
+                        parentPointA = TransformToLocal(parent, pointA);
+                        parentPointB = TransformToLocal(parent, pointB);
+                    }
                     var gestureData = new GestureEventData(
-                        new TouchEventData(pointA, localA),
-                        new TouchEventData(pointB, localB));
-                    
+                        new TouchEventData(pointA, parentPointA, localA),
+                        new TouchEventData(pointB, parentPointB, localB));
+                
                     if (handler(node, gestureData))
                         break;
                 }
@@ -211,13 +232,35 @@ public class EventDispatcher
     // TODO: Maybe move these outside of this class
     private PointF TransformToLocal(Node node, PointF worldPoint)
     {
-        if (Matrix3x2.Invert(_scene.GetParentTransform(node.Id), out var inverse))
+        // Get the node's world transform
+        var worldTransform = _scene.GetParentTransform(node.Id);
+    
+        // Invert it to map world -> local
+        if (!Matrix3x2.Invert(worldTransform, out var inverse))
+            return worldPoint;
+
+        // Transform the world point to the node's local space
+        var localPoint = Vector2.Transform(new Vector2(worldPoint.X, worldPoint.Y), inverse);
+
+        // Adjust for the node's anchor (Center) - shift local origin to match anchor
+        Vector2 anchorOffset = node.Center switch
         {
-            var localPoint = Vector2.Transform(new Vector2(worldPoint.X, worldPoint.Y), inverse);
-            return new PointF(localPoint.X, localPoint.Y);
-        }
-        
-        return worldPoint;
+            Anchor.TopLeft => Vector2.Zero,
+            Anchor.TopCenter => new Vector2(node.Size.Width / 2, 0),
+            Anchor.TopRight => new Vector2(node.Size.Width, 0),
+            Anchor.CenterLeft => new Vector2(0, node.Size.Height / 2),
+            Anchor.Center => new Vector2(node.Size.Width / 2, node.Size.Height / 2),
+            Anchor.CenterRight => new Vector2(node.Size.Width, node.Size.Height / 2),
+            Anchor.BottomLeft => new Vector2(0, node.Size.Height),
+            Anchor.BottomCenter => new Vector2(node.Size.Width / 2, node.Size.Height),
+            Anchor.BottomRight => new Vector2(node.Size.Width, node.Size.Height),
+            _ => Vector2.Zero
+        };
+
+        // Subtract anchor offset to align local (0,0) with the anchor point
+        localPoint -= anchorOffset;
+
+        return new PointF(localPoint.X, localPoint.Y);
     }
     
     private PointF TransformDeltaToLocal(Node node, PointF worldDelta)

@@ -20,6 +20,8 @@ public class FeatureNode : Node
     
     public bool WasClicked { get; set; }
     
+    public Vector2 DebugCenter;
+    
     public FeatureNode(ISceneService sceneService, FeatureHandleNode translationHandle, FeatureHandleNode rotationHandle)
     {
         _sceneService = sceneService ?? throw new ArgumentNullException(nameof(sceneService));
@@ -30,29 +32,29 @@ public class FeatureNode : Node
         Size = new SizeF(100, 100);
         Center = Anchor.Center;
 
-        _translationHandle.Feature = this;
-        _translationHandle.Transform = new Transform
-        {
-            Position = new Vector2(0f, -HANDLE_OFFSET),
-        };
-        _translationHandle.Clicked += OnTranslationHandleClicked;
-        _translationHandle.Dragged += OnTranslationHandleDragged;
-
-        _rotationHandle.Feature = this;
-        rotationHandle.Color = Colors.Aquamarine;
-        _rotationHandle.Transform = new Transform
-        {
-            Position = new Vector2(0f, HANDLE_OFFSET),
-        };
-        _rotationHandle.Clicked += OnRotationHandleClicked;
-        _rotationHandle.Dragged += OnRotationHandleDragged;
-        
-        Children = [ translationHandle, rotationHandle];
+        // _translationHandle.Feature = this;
+        // _translationHandle.Transform = new Transform
+        // {
+        //     Position = new Vector2(0f, -HANDLE_OFFSET),
+        // };
+        // _translationHandle.Clicked += OnTranslationHandleClicked;
+        // _translationHandle.Dragged += OnTranslationHandleDragged;
+        //
+        // _rotationHandle.Feature = this;
+        // rotationHandle.Color = Colors.Aquamarine;
+        // _rotationHandle.Transform = new Transform
+        // {
+        //     Position = new Vector2(0f, HANDLE_OFFSET),
+        // };
+        // _rotationHandle.Clicked += OnRotationHandleClicked;
+        // _rotationHandle.Dragged += OnRotationHandleDragged;
+        //
+        // Children = [ translationHandle, rotationHandle];
     }
 
     public override bool OnClicked(TouchEventData touchData)
     {
-        Console.WriteLine($"Clicked at Local: {touchData.LocalPoint}, World: {touchData.WorldPoint}");
+        Console.WriteLine($"Clicked at Local: {touchData.LocalPoint}, Parent: {touchData.ParentPoint}, World: {touchData.WorldPoint}");
         WasClicked = true;
         return true;
     }
@@ -83,22 +85,21 @@ public class FeatureNode : Node
         _sceneService.SetTransform(Id, Transform);
     }
 
-    private void OnRotationHandleClicked(TouchEventData obj)
+    private void OnRotationHandleClicked(TouchEventData touchData)
     {
+        Console.WriteLine($"Clicked at Local: {touchData.LocalPoint}, Parent: {touchData.ParentPoint}, World: {touchData.WorldPoint}");
         _rotationHandle.WasClicked = !_rotationHandle.WasClicked;
     }
 
-    public Vector2 DebugCenter;
     
     private void OnRotationHandleDragged((TouchEventData touchData, PointF localDelta) e)
     {
+        Console.WriteLine($"Clicked at Local: {e.touchData.LocalPoint}, Parent: {e.touchData.ParentPoint}, World: {e.touchData.WorldPoint}");
+        
         var transform = _sceneService.GetTransform(Id);
         var worldTransform = Scene.GetParentTransform(Id);
 
-        var cursor = new Vector2(
-            e.touchData.WorldPoint.X,
-            e.touchData.WorldPoint.Y);
-
+        var cursor = new Vector2(e.touchData.WorldPoint.X, e.touchData.WorldPoint.Y);
         var featureCenter = Vector2.Transform(
             new Vector2(Size.Width * 0.5f, Size.Height * 0.5f),
             worldTransform);
@@ -114,29 +115,26 @@ public class FeatureNode : Node
         _sceneService.SetTransform(Id, transform);
 
         DebugCenter = new Vector2(
-            e.touchData.LocalPoint.X + _rotationHandle.Size.Height * 0.5f,
-            e.touchData.LocalPoint.Y + _rotationHandle.Size.Width * 0.5f + HANDLE_OFFSET
+            e.touchData.ParentPoint.X,
+            e.touchData.ParentPoint.Y + HANDLE_OFFSET
         );
     }
-
 
     private class NodeRenderer : INodeRenderer
     {
         public void Draw(ICanvas canvas, Node node, RectF dirtyRect)
         {
-            if (node is not FeatureNode featureNode)
-                return;
-            
+            if (node is not FeatureNode featureNode) return;
+
             canvas.FillColor = featureNode.WasClicked ? Colors.Red : Colors.HotPink;
             canvas.FillEllipse(0f, 0f, node.Size.Width, node.Size.Height);
-            
-            canvas.DrawLine(featureNode.DebugCenter, new Point(featureNode.Size.Width * 0.5f, featureNode.Size.Height * 0.5f));
 
-            canvas.FillColor = Colors.Black;
-            canvas.FillCircle(new PointF(node.Size.Width * 0.5f, node.Size.Height * 0.5f), 10);
-            
-            canvas.FillColor = Colors.Green;
-            canvas.FillEllipse(featureNode.DebugCenter.X - 5, featureNode.DebugCenter.Y - 5, 10, 10);
+            // Draw world bounds for debugging
+            var scene = featureNode.Scene;
+            var worldBounds = scene.GetWorldBounds(node.Id);
+            canvas.StrokeColor = Colors.Blue;
+            canvas.StrokeSize = 2f;
+            canvas.DrawRectangle(worldBounds.X, worldBounds.Y, worldBounds.Width, worldBounds.Height);
         }
     }
 }
