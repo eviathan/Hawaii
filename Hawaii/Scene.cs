@@ -109,69 +109,24 @@ namespace Hawaii
                 _ => Vector2.Zero
             };
 
-            if (node.Position == PositionMode.Fixed || node.Position == PositionMode.Absolute)
-            {
-                localMatrix = node.PropagateScale
-                    ? Matrix3x2.CreateTranslation(-centerOffset) *
-                      Matrix3x2.CreateScale(local.Scale) *
-                      Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
-                      Matrix3x2.CreateTranslation(adjustedPosition + centerOffset)
-                    : Matrix3x2.CreateTranslation(-centerOffset) *
-                      Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
-                      Matrix3x2.CreateTranslation(adjustedPosition + centerOffset);
-                transform = localMatrix;
-            }
-            else if (node.Position == PositionMode.Static)
-            {
-                transform = HierarchyMap[nodeId].HasValue
-                    ? Matrix3x2.CreateTranslation(adjustedPosition) * GetParentTransform(HierarchyMap[nodeId].Value)
-                    : Matrix3x2.CreateTranslation(adjustedPosition);
-            }
-            else
-            {
-                if (HierarchyMap[nodeId].HasValue)
-                {
-                    var parent = Nodes[HierarchyMap[nodeId].Value];
-                    Vector2 parentOffset = parent.Center switch
-                    {
-                        Anchor.TopLeft => Vector2.Zero,
-                        Anchor.TopCenter => new Vector2(parent.Size.Width / 2, 0),
-                        Anchor.TopRight => new Vector2(parent.Size.Width, 0),
-                        Anchor.CenterLeft => new Vector2(0, parent.Size.Height / 2),
-                        Anchor.Center => new Vector2(parent.Size.Width / 2, parent.Size.Height / 2),
-                        Anchor.CenterRight => new Vector2(parent.Size.Width, parent.Size.Height / 2),
-                        Anchor.BottomLeft => new Vector2(0, parent.Size.Height),
-                        Anchor.BottomCenter => new Vector2(parent.Size.Width / 2, parent.Size.Height),
-                        Anchor.BottomRight => new Vector2(parent.Size.Width, parent.Size.Height),
-                        _ => Vector2.Zero
-                    };
-                    Vector2 childAnchorOffset = node.Center switch
-                    {
-                        Anchor.TopLeft => Vector2.Zero,
-                        Anchor.TopCenter => new Vector2(node.Size.Width / 2, 0),
-                        Anchor.TopRight => new Vector2(node.Size.Width, 0),
-                        Anchor.CenterLeft => new Vector2(0, node.Size.Height / 2),
-                        Anchor.Center => new Vector2(node.Size.Width / 2, node.Size.Height / 2),
-                        Anchor.CenterRight => new Vector2(node.Size.Width, node.Size.Height / 2),
-                        Anchor.BottomLeft => new Vector2(0, node.Size.Height),
-                        Anchor.BottomCenter => new Vector2(node.Size.Width / 2, node.Size.Height),
-                        Anchor.BottomRight => new Vector2(node.Size.Width, node.Size.Height),
-                        _ => Vector2.Zero
-                    };
-                    adjustedPosition += parentOffset - childAnchorOffset;
-                }
+            // Base transform: Start with parent transform if exists
+            Matrix3x2 parentMatrix = HierarchyMap[nodeId].HasValue
+                ? GetParentTransform(HierarchyMap[nodeId].Value)
+                : Matrix3x2.Identity;
 
-                localMatrix = node.PropagateScale
-                    ? Matrix3x2.CreateTranslation(-centerOffset) *
-                      Matrix3x2.CreateScale(local.Scale) *
-                      Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
-                      Matrix3x2.CreateTranslation(adjustedPosition + centerOffset)
-                    : Matrix3x2.CreateTranslation(-centerOffset) *
-                      Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
-                      Matrix3x2.CreateTranslation(adjustedPosition + centerOffset);
-                transform = HierarchyMap[nodeId].HasValue
-                    ? localMatrix * GetParentTransform(HierarchyMap[nodeId].Value)
-                    : localMatrix;
+            // Local transform: Apply scale only if PropagateScale
+            localMatrix = Matrix3x2.CreateTranslation(-centerOffset) *
+                          (node.PropagateScale ? Matrix3x2.CreateScale(local.Scale) : Matrix3x2.Identity) *
+                          Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
+                          Matrix3x2.CreateTranslation(adjustedPosition + centerOffset);
+
+            // Combine with parent transform
+            transform = localMatrix * parentMatrix;
+
+            // Position mode adjustments (only affect position)
+            if (node.Position == PositionMode.Static)
+            {
+                transform = Matrix3x2.CreateTranslation(adjustedPosition) * parentMatrix; // No local scale/rotation
             }
 
             _worldTransformCache[nodeId] = transform;
@@ -198,12 +153,12 @@ namespace Hawaii
                     Vector2.Transform(new Vector2(effectiveBounds.Right, effectiveBounds.Bottom), worldTransform),
                     Vector2.Transform(new Vector2(effectiveBounds.Left, effectiveBounds.Bottom), worldTransform)
                 };
-                
+        
                 var minX = corners.Min(p => p.X);
                 var maxX = corners.Max(p => p.X);
                 var minY = corners.Min(p => p.Y);
                 var maxY = corners.Max(p => p.Y);
-                
+        
                 bounds = new RectF(minX, minY, maxX - minX, maxY - minY);
                 _worldBoundsCache[nodeId] = bounds;
             }

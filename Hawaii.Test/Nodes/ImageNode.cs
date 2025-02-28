@@ -10,12 +10,12 @@ public class ImageNode : Node
     
     public ImageNode(Scene scene) : base(scene)
     {
-        PropagateScale = true;
-        Renderer = new NodeRenderer();
         Position = PositionMode.Absolute;
         Center = Anchor.TopLeft;
         Alignment = Alignment.Center;
         Size = new SizeF(640, 400);
+        // PropagateScale = true;
+        Renderer = new NodeRenderer();
     }
 
     private class NodeRenderer : INodeRenderer

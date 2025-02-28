@@ -27,7 +27,7 @@ public class Node
 
     public INodeRenderer Renderer { get; set; }
     
-    protected Scene Scene { get; }
+    public Scene Scene { get; }
 
     public Node(Scene scene)
     {
