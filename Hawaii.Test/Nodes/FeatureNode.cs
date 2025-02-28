@@ -65,9 +65,7 @@ public class FeatureNode : Node
 
     public override bool OnDrag(TouchEventData touchData, PointF localDelta)
     {
-        var transform = _scene.GetTransform(Id);
-        transform.Position += new Vector2(localDelta.X, localDelta.Y);
-        _scene.SetTransform(Id, transform);
+        TranslateFeature(touchData);
         
         return true;
     }
@@ -79,12 +77,17 @@ public class FeatureNode : Node
 
     private void OnTranslationHandleDragged((TouchEventData touchData, PointF localDelta) e)
     {
+        TranslateFeature(e.touchData, new Vector2(0, -HANDLE_OFFSET));
+    }
+
+    private void TranslateFeature(TouchEventData touchData, Vector2 offset = default)
+    {
         var transform = Scene.GetTransform(Id);
         var worldTransform = Scene.GetWorldTransform(Id);
-        var handleLocalPos = new Vector2(0, -HANDLE_OFFSET); // Handle offset from center
+        var handleLocalPos = offset;
         var handleWorldPos = Vector2.Transform(handleLocalPos, worldTransform);
-        var cursorWorldPos = new Vector2(e.touchData.WorldPoint.X, e.touchData.WorldPoint.Y);
-        var delta = cursorWorldPos - handleWorldPos; // Move center so handle hits cursor
+        var cursorWorldPos = new Vector2(touchData.WorldPoint.X, touchData.WorldPoint.Y);
+        var delta = cursorWorldPos - handleWorldPos;
         Translate(delta, Space.World);
     }
 
