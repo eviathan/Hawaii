@@ -1,4 +1,5 @@
 ﻿using Hawaii.Interfaces;
+using Hawaii.Nodes;
 using Hawaii.Services;
 using Hawaii.Test.Nodes;
 using Hawaii.Test.SceneBuilders;
@@ -22,18 +23,15 @@ public static class MauiProgram
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
-		
-		builder.Services.AddSingleton<IGestureRecognitionService, GestureRecognitionService>();
-		
-		builder.Services.AddScoped<Scene>();
-		builder.Services.AddScoped<SceneRenderer>();
-		builder.Services.AddScoped<EventDispatcher>();
+
+		builder.Services.AddHawaii();
 		
 		builder.Services.AddScoped<ISceneBuilder, FeatureSceneBuilder>(); 
 		
+		builder.Services.AddTransient<CanvasNode>();
+		builder.Services.AddTransient<ImageNode>();
 		builder.Services.AddTransient<FeatureNode>();
 		builder.Services.AddTransient<FeatureHandleNode>();
-		builder.Services.AddTransient<ImageNode>();
 		
 		return builder.Build();
 	}

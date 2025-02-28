@@ -10,7 +10,7 @@ public class Node
     public Guid Id { get; } = Guid.NewGuid();
     
     public INodeState State { get; set; }
-
+    
     public bool PropagateScale { get; set; }
     
     public SizeF Size { get; set; }
@@ -26,6 +26,40 @@ public class Node
     public List<Node> Children { get; set; } = [];
 
     public INodeRenderer Renderer { get; set; }
+    
+    protected Scene Scene { get; }
+
+    public Node(Scene scene)
+    {
+        Scene = scene ?? throw new ArgumentNullException(nameof(scene));
+    }
+    
+    public virtual void Translate(Vector2 delta, Space space)
+    {
+        var transform = Scene.GetTransform(Id);
+        
+        if (space == Space.Local)
+        {
+            transform.Position += delta;
+        }
+        else
+        {
+            var worldTransform = Scene.GetWorldTransform(Id);
+            var currentWorldPos = Vector2.Transform(Vector2.Zero, worldTransform);
+            var newWorldPos = currentWorldPos + delta;
+            
+            var parentTransform = Scene.HierarchyMap[Id].HasValue
+                ? Scene.GetWorldTransform(Scene.HierarchyMap[Id].Value)
+                : Matrix3x2.Identity;
+            
+            if (Matrix3x2.Invert(parentTransform, out var inverseParent))
+            {
+                transform.Position = Vector2.Transform(newWorldPos, inverseParent);
+            }
+        }
+        
+        Scene.SetTransform(Id, transform);
+    }
     
 
     public void AddChild(Node child)

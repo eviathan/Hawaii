@@ -20,7 +20,7 @@ public class FeatureNode : Node
     
     public Vector2 DebugCenter;
     
-    public FeatureNode(Scene scene, FeatureHandleNode translationHandle, FeatureHandleNode rotationHandle)
+    public FeatureNode(Scene scene, FeatureHandleNode translationHandle, FeatureHandleNode rotationHandle) : base(scene)
     {
         _scene = scene ?? throw new ArgumentNullException(nameof(scene));
         _translationHandle = translationHandle ?? throw new ArgumentNullException(nameof(translationHandle));
@@ -79,8 +79,13 @@ public class FeatureNode : Node
 
     private void OnTranslationHandleDragged((TouchEventData touchData, PointF localDelta) e)
     {
-        Transform.Position += new Vector2(e.localDelta.X, e.localDelta.Y);
-        _scene.SetTransform(Id, Transform);
+        var transform = Scene.GetTransform(Id);
+        var worldTransform = Scene.GetWorldTransform(Id);
+        var handleLocalPos = new Vector2(0, -HANDLE_OFFSET); // Handle offset from center
+        var handleWorldPos = Vector2.Transform(handleLocalPos, worldTransform);
+        var cursorWorldPos = new Vector2(e.touchData.WorldPoint.X, e.touchData.WorldPoint.Y);
+        var delta = cursorWorldPos - handleWorldPos; // Move center so handle hits cursor
+        Translate(delta, Space.World);
     }
 
     private void OnRotationHandleClicked(TouchEventData touchData)

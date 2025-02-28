@@ -6,7 +6,7 @@ namespace Hawaii.Nodes;
 
 public class CanvasNode : Node
 {
-    public CanvasNode()
+    public CanvasNode(Scene scene) : base(scene)
     {
         Renderer = new NodeRenderer();
         Center = Anchor.Center;

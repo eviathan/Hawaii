@@ -8,7 +8,7 @@ public class ImageNode : Node
 {
     public Scene Scene { get; set; }
     
-    public ImageNode()
+    public ImageNode(Scene scene) : base(scene)
     {
         PropagateScale = true;
         Renderer = new NodeRenderer();

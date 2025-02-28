@@ -25,10 +25,10 @@ public class Scene
     
     public Scene()
     {
-        TransformChanged += InvalidateNode;
-        
-        RootNode = new CanvasNode();
+        RootNode = new CanvasNode(this);
         AddNode(RootNode);
+        
+        TransformChanged += InvalidateNode;
     }
 
     public void AddNode(Node node, Guid? parentId = null)

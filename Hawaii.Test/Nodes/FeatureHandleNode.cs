@@ -17,7 +17,7 @@ public class FeatureHandleNode : Node
     
     public event Action<(TouchEventData touchData, PointF localDelta)> Dragged;
 
-    public FeatureHandleNode()
+    public FeatureHandleNode(Scene scene) : base(scene)
     {
         Renderer = new NodeRenderer();
         Center = Anchor.Center;
