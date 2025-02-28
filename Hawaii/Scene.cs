@@ -8,25 +8,24 @@ namespace Hawaii;
 public class Scene
 {
     public Node RootNode { get; }
-
     public Dictionary<Guid, Guid?> HierarchyMap { get; }  = new();
-
     public Dictionary<Guid, Node> Nodes { get; } = new();
+    
+    private readonly Dictionary<Guid, Transform> _transforms = [];
 
     private readonly Dictionary<Guid, Matrix3x2> _worldTransformCache = new();
     
-    private readonly ISceneService _sceneService;
-
     private readonly Dictionary<Guid, RectF> _worldBoundsCache = new();
 
     private readonly List<RectF> _dirtyRegions = new();
-    
-    public Action? InvalidateView { get; set; }
 
-    public Scene(ISceneService sceneService)
+    public Action? InvalidateView { get; set; }
+    
+    public event Action<Guid>? TransformChanged;
+    
+    public Scene()
     {
-        _sceneService = sceneService;
-        _sceneService.TransformChanged += InvalidateNode;
+        TransformChanged += InvalidateNode;
         
         RootNode = new CanvasNode();
         AddNode(RootNode);
@@ -39,8 +38,8 @@ public class Scene
         MarkDirty(node.Id);
     }
 
-    public void RemoveNode(Node node)
-    {
+    // public void RemoveNode(Node node)
+    // {
         //if (!_nodes.ContainsKey(node.Id)) return;
 
         //var children = node.Children.ToList();
@@ -59,7 +58,7 @@ public class Scene
         //else
         //    foreach (var topNode in _nodes.Values.Where(n => !_parentDictionary.ContainsKey(n.Id)))
         //        MarkDirty(topNode.Id);
-    }
+    // }
 
     public void ClearNodes()
     {
@@ -70,24 +69,37 @@ public class Scene
         _dirtyRegions.Clear();
     }
     
-    public Vector2 GetGlobalPosition(Guid nodeId)
-    {
-        var transform = GetWorldTransform(nodeId);
-        return Vector2.Transform(Vector2.Zero, transform);
-    }
+    // public Vector2 GetGlobalPosition(Guid nodeId)
+    // {
+    //     var transform = GetWorldTransform(nodeId);
+    //     return Vector2.Transform(Vector2.Zero, transform);
+    // }
     
     public Matrix3x2 GetWorldTransform(Guid nodeId)
     {
         Matrix3x2 transform = Matrix3x2.Identity;
         var currentId = nodeId;
-
-        while (currentId != Guid.Empty) // Stop at no parent (RootNode)
+    
+        while (currentId != Guid.Empty)
         {
             transform = GetParentTransform(currentId) * transform;
             currentId = HierarchyMap[currentId] ?? Guid.Empty;
         }
-
+    
         return transform;
+    }
+    
+    public Transform GetTransform(Guid id)
+    {
+        return _transforms.TryGetValue(id, out var transform)
+            ? transform 
+            : new Transform();
+    }
+    
+    public void SetTransform(Guid id, Transform transform)
+    {
+        _transforms[id] = transform;
+        TransformChanged?.Invoke(id);
     }
 
     public Matrix3x2 GetParentTransform(Guid nodeId)
@@ -95,7 +107,7 @@ public class Scene
         if (_worldTransformCache.TryGetValue(nodeId, out var transform)) 
             return transform;
         
-        var local = _sceneService.GetTransform(nodeId) ?? new Transform();
+        var local = GetTransform(nodeId) ?? new Transform();
         var node = Nodes[nodeId];
         
         Vector2 adjustedPosition = local.Position;
@@ -175,8 +187,9 @@ public class Scene
                 ? Matrix3x2.CreateScale(local.Scale) *
                   Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
                   Matrix3x2.CreateTranslation(adjustedPosition)
-                : Matrix3x2.CreateTranslation(adjustedPosition) *
-                  Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f);
+                : Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
+                  Matrix3x2.CreateTranslation(adjustedPosition);
+                  
 
             transform = HierarchyMap[nodeId].HasValue
                 ? localMatrix * GetParentTransform(HierarchyMap[nodeId].Value)
@@ -193,10 +206,9 @@ public class Scene
         {
             var node = Nodes[nodeId];
             var localBounds = node.GetLocalBounds();
-            var worldTransform = GetParentTransform(nodeId);
-            var localScale = _sceneService.GetTransform(nodeId).Scale;
+            var worldTransform = GetWorldTransform(nodeId);
+            var localScale = GetTransform(nodeId).Scale;
 
-            // Scale bounds only if not propagated (since propagation is in world transform)
             var effectiveBounds = node.PropagateScale
                 ? localBounds
                 : new RectF(0, 0, localBounds.Width * localScale.X, localBounds.Height * localScale.Y);
@@ -208,11 +220,14 @@ public class Scene
                 Vector2.Transform(new Vector2(effectiveBounds.Right, effectiveBounds.Bottom), worldTransform),
                 Vector2.Transform(new Vector2(effectiveBounds.Left, effectiveBounds.Bottom), worldTransform)
             };
+            
             var minX = corners.Min(p => p.X);
             var maxX = corners.Max(p => p.X);
             var minY = corners.Min(p => p.Y);
             var maxY = corners.Max(p => p.Y);
+            
             bounds = new RectF(minX, minY, maxX - minX, maxY - minY);
+            
             _worldBoundsCache[nodeId] = bounds;
         }
         return bounds;
@@ -265,11 +280,6 @@ public class Scene
         _dirtyRegions.Clear();
 
         return new RectF(minX, minY, maxX - minX, maxY - minY);
-    }
-
-    public void SetTransform(Guid nodeId, Transform transform)
-    {
-        _sceneService.SetTransform(nodeId, transform);
     }
 
     private void InvalidateNode(Guid nodeId)

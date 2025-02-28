@@ -7,10 +7,8 @@ public class SceneGraphicsView<TBuilder> : GraphicsView
     where TBuilder : class, ISceneBuilder
     {
         private readonly SceneRenderer _renderer;
-
-        private readonly ISceneService _sceneService;
         
-        private readonly IGestureRecognitionService _gestureRecognitionService;
+        private readonly IServiceScope _scope;
 
         public INodeState State
         {
@@ -33,12 +31,8 @@ public class SceneGraphicsView<TBuilder> : GraphicsView
             if (services == null)
                 throw new InvalidOperationException("DI container not available.");
 
-            var sceneBuilder = services.GetRequiredService<TBuilder>();
-            
-            _sceneService = services.GetRequiredService<ISceneService>();
-            _gestureRecognitionService = services.GetRequiredService<IGestureRecognitionService>();
-            
-            _renderer = new SceneRenderer(_sceneService, sceneBuilder, _gestureRecognitionService);
+            _scope = services.CreateScope();
+            _renderer = _scope.ServiceProvider.GetRequiredService<SceneRenderer>();
             
             _renderer.GraphicsView = this;
             Drawable = _renderer;

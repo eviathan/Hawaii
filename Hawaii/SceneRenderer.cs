@@ -1,86 +1,70 @@
 using System.ComponentModel;
 using System.Numerics;
 using Hawaii.Interfaces;
-using Hawaii.Services;
 
 namespace Hawaii;
 
 public class SceneRenderer : BindableObject, IDrawable
 {
+    private Scene _scene;
+    
+    private readonly ISceneBuilder _sceneBuilder;
+
+    private readonly EventDispatcher _eventDispatcher;
+
+    private readonly Dictionary<Guid, Node> _nodes = [];
+
+    public GraphicsView? GraphicsView { get; set; }
+    
     public static readonly BindableProperty StateProperty = BindableProperty.Create(
         nameof(State),
         typeof(INodeState),
         typeof(SceneRenderer),
         propertyChanged: (bindable, _, _) => ((SceneRenderer)bindable).OnStateChanged());
     
-    private readonly ISceneBuilder _sceneBuilder;
-
-    private readonly ISceneService _sceneService;
-    
-    private readonly IGestureRecognitionService _gestureRecognitionService;
-
-    private readonly EventDispatcher _dispatcher;
-
-    private readonly Dictionary<Guid, Node> _nodes = new();
-
-    private Scene _scene;
-
     private INodeState _state;
-
-    public GraphicsView? GraphicsView { get; set; }
-
+    
     public INodeState State
     {
         get => (INodeState)GetValue(StateProperty);
         set => SetValue(StateProperty, value);
     }
 
-    public SceneRenderer(ISceneService sceneService, ISceneBuilder sceneBuilder, IGestureRecognitionService gestureRecognitionService)
+    public SceneRenderer(Scene scene, EventDispatcher eventDispatcher, ISceneBuilder sceneBuilder)
     {
-        _sceneService = sceneService ?? throw new ArgumentNullException(nameof(sceneService));
+        _scene = scene ?? throw new ArgumentNullException(nameof(scene));
         _sceneBuilder = sceneBuilder ?? throw new ArgumentNullException(nameof(sceneBuilder));
-        _gestureRecognitionService = gestureRecognitionService ?? throw new ArgumentNullException(nameof(gestureRecognitionService));
-
-        _scene = new Scene(_sceneService);
-        _scene.InvalidateView = () => GraphicsView?.Invalidate();
+        _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
         
-        _dispatcher = new EventDispatcher(_scene);
+        _scene.InvalidateView = () => GraphicsView?.Invalidate();
     }
     
     public void HandleSingleTouchDown(PointF point)
     {
         var worldPoint = TransformToWorld(point);
-        _dispatcher.HandleSingleTouchDown(worldPoint);
+        _eventDispatcher.HandleSingleTouchDown(worldPoint);
     }
 
     public void HandleSingleTouchMove(PointF point)
     {
         var worldPoint = TransformToWorld(point);
-        _dispatcher.HandleSingleTouchMove(worldPoint);
+        _eventDispatcher.HandleSingleTouchMove(worldPoint);
     }
 
     public void HandleSingleTouchUp(PointF point)
     {
         var worldPoint = TransformToWorld(point);
-        _dispatcher.HandleSingleTouchUp(worldPoint);
+        _eventDispatcher.HandleSingleTouchUp(worldPoint);
     }
     
     public void HandleTwoFingerDown(PointF pointA, PointF pointB)
     {
-        _gestureRecognitionService.AddFrame(pointA, pointB);
-        _dispatcher.HandleTwoFingerDown(pointA, pointB);
+        _eventDispatcher.HandleTwoFingerDown(pointA, pointB);
     }
     
     public void HandleTwoFingerMove(PointF pointA, PointF pointB)
     {
-        _gestureRecognitionService.AddFrame(pointA, pointB);
-        
-        if (_gestureRecognitionService.TryDetectPan(out var delta))
-            _dispatcher.HandleTwoFingerPan(pointA, pointB, delta);
-        if (_gestureRecognitionService.TryDetectPinch(out var scaleFactor))
-            _dispatcher.HandleTwoFingerPinch(pointA, pointB, scaleFactor);
-        if (_gestureRecognitionService.TryDetectRotation(out var angle))
-            _dispatcher.HandleTwoFingerRotate(pointA, pointB, angle);
+        _eventDispatcher.HandleTwoFingerMove(pointA, pointB);
     }
     
     public void HandleTwoFingerUp(PointF pointA, PointF pointB)
@@ -88,36 +72,56 @@ public class SceneRenderer : BindableObject, IDrawable
         var worldA = TransformToWorld(pointA);
         var worldB = TransformToWorld(pointB);
         
-        _dispatcher.HandleTwoFingerUp(worldA, worldB);
+        _eventDispatcher.HandleTwoFingerUp(worldA, worldB);
     }
 
+    // public void Draw(ICanvas canvas, RectF dirtyRect)
+    // {
+    //     var combinedDirty = _scene.GetDirtyRegion();
+    //     
+    //     if (combinedDirty.IsEmpty || _dispatcher.IsDragging())
+    //         combinedDirty = dirtyRect;
+    //     
+    //     var orderedNodes = _scene.GetNodesInDrawOrder();
+    //     
+    //     foreach (var node in orderedNodes)
+    //     {
+    //         var bounds = _scene.GetWorldBounds(node.Id);
+    //         
+    //         if (bounds.IntersectsWith(combinedDirty))
+    //         {
+    //             var transform = _scene.GetParentTransform(node.Id);
+    //             var localScale = _sceneService.GetTransform(node.Id).Scale;
+    //             
+    //             canvas.SaveState();
+    //             canvas.ConcatenateTransform(transform);
+    //             
+    //             if (!node.PropagateScale)
+    //                 canvas.Scale(localScale.X, localScale.Y);
+    //             
+    //             node.Renderer?.Draw(canvas, node, combinedDirty);
+    //             canvas.RestoreState();
+    //         }
+    //     }
+    // }
+    
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
-        var combinedDirty = _scene.GetDirtyRegion();
-        
-        if (combinedDirty.IsEmpty || _dispatcher.IsDragging())
-            combinedDirty = dirtyRect;
-        
         var orderedNodes = _scene.GetNodesInDrawOrder();
-        
+    
         foreach (var node in orderedNodes)
         {
-            var bounds = _scene.GetWorldBounds(node.Id);
-            
-            if (bounds.IntersectsWith(combinedDirty))
-            {
-                var transform = _scene.GetParentTransform(node.Id);
-                var localScale = _sceneService.GetTransform(node.Id).Scale;
-                
-                canvas.SaveState();
-                canvas.ConcatenateTransform(transform);
-                
-                if (!node.PropagateScale)
-                    canvas.Scale(localScale.X, localScale.Y);
-                
-                node.Renderer?.Draw(canvas, node, combinedDirty);
-                canvas.RestoreState();
-            }
+            var transform = _scene.GetParentTransform(node.Id);
+            var localScale = _scene.GetTransform(node.Id).Scale;
+        
+            canvas.SaveState();
+            canvas.ConcatenateTransform(transform);
+        
+            if (!node.PropagateScale)
+                canvas.Scale(localScale.X, localScale.Y);
+        
+            node.Renderer?.Draw(canvas, node, dirtyRect);
+            canvas.RestoreState();
         }
     }
     
@@ -137,7 +141,7 @@ public class SceneRenderer : BindableObject, IDrawable
             return;
 
         _state = State;
-        _sceneBuilder.Build(_scene, _state);
+        _sceneBuilder.Build(_state);
         
         GraphicsView?.Invalidate();
 
@@ -150,7 +154,7 @@ public class SceneRenderer : BindableObject, IDrawable
 
     private void OnStatePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-        _sceneBuilder.Build(_scene, _state);
+        _sceneBuilder.Build(_state);
         GraphicsView?.Invalidate();
     }
 }

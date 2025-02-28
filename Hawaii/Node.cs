@@ -10,7 +10,7 @@ public class Node
     public Guid Id { get; } = Guid.NewGuid();
     
     public INodeState State { get; set; }
-    
+
     public bool PropagateScale { get; set; }
     
     public SizeF Size { get; set; }
@@ -26,6 +26,7 @@ public class Node
     public List<Node> Children { get; set; } = [];
 
     public INodeRenderer Renderer { get; set; }
+    
 
     public void AddChild(Node child)
     {

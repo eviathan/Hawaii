@@ -2,6 +2,7 @@ using System.Numerics;
 using Hawaii.Enums;
 using Hawaii.EventData;
 using Hawaii.Extensions;
+using Hawaii.Interfaces;
 
 namespace Hawaii;
 
@@ -12,6 +13,8 @@ public class EventDispatcher
     private const float DRAG_THRESHHOLD_IN_PIXELS = 5f;
     
     private readonly Scene _scene;
+    
+    private IGestureRecognitionService _gestureRecognitionService;
     
     private PointF? _lastSinglePoint;
     
@@ -25,9 +28,10 @@ public class EventDispatcher
 
     public bool IsDragging() => _draggedNode != null;
     
-    public EventDispatcher(Scene scene)
+    public EventDispatcher(Scene scene, IGestureRecognitionService gestureRecognitionService)
     {
-        _scene = scene;
+        _scene = scene ?? throw new ArgumentNullException(nameof(scene));
+        _gestureRecognitionService = gestureRecognitionService ?? throw new ArgumentNullException(nameof(gestureRecognitionService));
     }
     
     public void HandleSingleTouchDown(PointF worldPoint)
@@ -52,7 +56,7 @@ public class EventDispatcher
             {
                 PropagateEvent(worldPoint, (node, touchData) =>
                 {
-                    Console.WriteLine($"WorldPoint: ({worldPoint.X}, {worldPoint.Y})");
+                    // Console.WriteLine($"WorldPoint: ({worldPoint.X}, {worldPoint.Y})");
                     var localDelta = TransformDeltaToLocal(node, delta);
                     if (node.OnDrag(touchData, localDelta))
                     {
@@ -100,28 +104,26 @@ public class EventDispatcher
         _scene.InvalidateView?.Invoke();
     }
 
+    public void HandleTwoFingerMove(PointF pointA, PointF pointB)
+    {
+        _gestureRecognitionService.AddFrame(pointA, pointB);
+        
+        if (_gestureRecognitionService.TryDetectPan(out var delta))
+            PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerDrag(gestureData));
+        if (_gestureRecognitionService.TryDetectPinch(out var scaleFactor))
+            PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnPinch(gestureData));
+        if (_gestureRecognitionService.TryDetectRotation(out var angle))
+            PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnRotate(gestureData));
+        
+        _scene.InvalidateView?.Invoke();
+    }
+
     public void HandleTwoFingerDown(PointF pointA, PointF pointB)
     {
         _lastTwoPoints = (pointA, pointB);
+        _gestureRecognitionService.AddFrame(pointA, pointB);
+        
         PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerClicked(gestureData));
-        _scene.InvalidateView?.Invoke();
-    }
-
-    public void HandleTwoFingerPan(PointF pointA, PointF pointB, PointF delta)
-    {
-        PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnTwoFingerDrag(gestureData));
-        _scene.InvalidateView?.Invoke();
-    }
-
-    public void HandleTwoFingerPinch(PointF pointA, PointF pointB, float scaleFactor)
-    {
-        PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnPinch(gestureData));
-        _scene.InvalidateView?.Invoke();
-    }
-
-    public void HandleTwoFingerRotate(PointF pointA, PointF pointB, float angle)
-    {
-        PropagateTwoFingerEvent(pointA, pointB, (node, gestureData) => node.OnRotate(gestureData));
         _scene.InvalidateView?.Invoke();
     }
 
@@ -139,27 +141,21 @@ public class EventDispatcher
     private void PropagateEvent(PointF worldPoint, Func<Node, TouchEventData, bool> handler)
     {
         var orderedNodes = GetNodesInHitTestOrder(_scene.RootNode);
-    
+
         foreach (var node in orderedNodes)
         {
-            var worldBounds = _scene.GetWorldBounds(node.Id);
-        
-            if (worldBounds.Contains(worldPoint))
+            var localPoint = TransformToLocal(node, worldPoint);
+            if (node.ContainsLocalPoint(localPoint))
             {
-                var localPoint = TransformToLocal(node, worldPoint);
-            
-                if (node.ContainsLocalPoint(localPoint))
+                PointF parentPoint = worldPoint;
+                if (_scene.HierarchyMap[node.Id].HasValue)
                 {
-                    PointF parentPoint = worldPoint;
-                    if (_scene.HierarchyMap[node.Id].HasValue)
-                    {
-                        var parent = _scene.Nodes[_scene.HierarchyMap[node.Id].Value];
-                        parentPoint = TransformToLocal(parent, worldPoint);
-                    }
-                    var touchData = new TouchEventData(worldPoint, parentPoint, localPoint);
-                    if (handler(node, touchData))
-                        break;
+                    var parent = _scene.Nodes[_scene.HierarchyMap[node.Id].Value];
+                    parentPoint = TransformToLocal(parent, worldPoint);
                 }
+                var touchData = new TouchEventData(worldPoint, parentPoint, localPoint);
+                if (handler(node, touchData))
+                    break;
             }
         }
     }
@@ -170,30 +166,25 @@ public class EventDispatcher
     
         foreach (var node in orderedNodes)
         {
-            var worldBounds = _scene.GetWorldBounds(node.Id);
+            var localA = TransformToLocal(node, pointA);
+            var localB = TransformToLocal(node, pointB);
         
-            if (worldBounds.Contains(pointA) || worldBounds.Contains(pointB))
+            if (node.ContainsLocalPoint(localA) || node.ContainsLocalPoint(localB))
             {
-                var localA = TransformToLocal(node, pointA);
-                var localB = TransformToLocal(node, pointB);
-            
-                if (node.ContainsLocalPoint(localA) || node.ContainsLocalPoint(localB))
+                PointF parentPointA = pointA;
+                PointF parentPointB = pointB;
+                if (_scene.HierarchyMap[node.Id].HasValue)
                 {
-                    PointF parentPointA = pointA;
-                    PointF parentPointB = pointB;
-                    if (_scene.HierarchyMap[node.Id].HasValue)
-                    {
-                        var parent = _scene.Nodes[_scene.HierarchyMap[node.Id].Value];
-                        parentPointA = TransformToLocal(parent, pointA);
-                        parentPointB = TransformToLocal(parent, pointB);
-                    }
-                    var gestureData = new GestureEventData(
-                        new TouchEventData(pointA, parentPointA, localA),
-                        new TouchEventData(pointB, parentPointB, localB));
-                
-                    if (handler(node, gestureData))
-                        break;
+                    var parent = _scene.Nodes[_scene.HierarchyMap[node.Id].Value];
+                    parentPointA = TransformToLocal(parent, pointA);
+                    parentPointB = TransformToLocal(parent, pointB);
                 }
+                var gestureData = new GestureEventData(
+                    new TouchEventData(pointA, parentPointA, localA),
+                    new TouchEventData(pointB, parentPointB, localB));
+            
+                if (handler(node, gestureData))
+                    break;
             }
         }
     }

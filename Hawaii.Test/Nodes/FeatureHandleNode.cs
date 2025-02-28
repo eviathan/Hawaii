@@ -7,8 +7,6 @@ namespace Hawaii.Test.Nodes;
 
 public class FeatureHandleNode : Node
 {
-    private readonly ISceneService _sceneService;
-    
     public FeatureNode Feature { get; set; }
 
     public Color Color { get; set; } = Colors.Black;
@@ -19,9 +17,8 @@ public class FeatureHandleNode : Node
     
     public event Action<(TouchEventData touchData, PointF localDelta)> Dragged;
 
-    public FeatureHandleNode(ISceneService sceneService)
+    public FeatureHandleNode()
     {
-        _sceneService = sceneService ?? throw new ArgumentNullException(nameof(sceneService));
         Renderer = new NodeRenderer();
         Center = Anchor.Center;
         Size = new SizeF(50, 50);
