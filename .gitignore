@@ -123,6 +123,7 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 ### VisualStudioCode ###
+.vs
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
