@@ -74,36 +74,6 @@ public class SceneRenderer : BindableObject, IDrawable
         
         _eventDispatcher.HandleTwoFingerUp(worldA, worldB);
     }
-
-    // public void Draw(ICanvas canvas, RectF dirtyRect)
-    // {
-    //     var combinedDirty = _scene.GetDirtyRegion();
-    //     
-    //     if (combinedDirty.IsEmpty || _dispatcher.IsDragging())
-    //         combinedDirty = dirtyRect;
-    //     
-    //     var orderedNodes = _scene.GetNodesInDrawOrder();
-    //     
-    //     foreach (var node in orderedNodes)
-    //     {
-    //         var bounds = _scene.GetWorldBounds(node.Id);
-    //         
-    //         if (bounds.IntersectsWith(combinedDirty))
-    //         {
-    //             var transform = _scene.GetParentTransform(node.Id);
-    //             var localScale = _sceneService.GetTransform(node.Id).Scale;
-    //             
-    //             canvas.SaveState();
-    //             canvas.ConcatenateTransform(transform);
-    //             
-    //             if (!node.PropagateScale)
-    //                 canvas.Scale(localScale.X, localScale.Y);
-    //             
-    //             node.Renderer?.Draw(canvas, node, combinedDirty);
-    //             canvas.RestoreState();
-    //         }
-    //     }
-    // }
     
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
@@ -117,7 +87,7 @@ public class SceneRenderer : BindableObject, IDrawable
             canvas.SaveState();
             canvas.ConcatenateTransform(transform);
         
-            if (!node.PropagateScale)
+            if (!node.IgnoreAncestorScale)
                 canvas.Scale(localScale.X, localScale.Y);
         
             node.Renderer?.Draw(canvas, node, dirtyRect);
@@ -132,6 +102,7 @@ public class SceneRenderer : BindableObject, IDrawable
             var worldVec = Vector2.Transform(new Vector2(screenPoint.X, screenPoint.Y), inverse);
             return new PointF(worldVec.X, worldVec.Y);
         }
+
         return screenPoint;
     }
 
@@ -141,8 +112,8 @@ public class SceneRenderer : BindableObject, IDrawable
             return;
 
         _state = State;
+        _scene.ClearNodes();
         _sceneBuilder.Build(_state);
-        
         GraphicsView?.Invalidate();
 
         if (_state is INotifyPropertyChanged notify)
@@ -154,7 +125,9 @@ public class SceneRenderer : BindableObject, IDrawable
 
     private void OnStatePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
+        _scene.ClearNodes();
         _sceneBuilder.Build(_state);
+
         GraphicsView?.Invalidate();
     }
 }

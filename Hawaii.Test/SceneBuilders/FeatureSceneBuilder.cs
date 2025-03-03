@@ -18,11 +18,9 @@ public class FeatureSceneBuilder : ISceneBuilder
     
     public void Build(INodeState state)
     {
-        _scene.ClearNodes();
         _scene.AddNode(_scene.RootNode);
         
         var background = _serviceProvider.GetRequiredService<ImageNode>();
-        background.Scene = _scene;
         _scene.AddNode(background, _scene.RootNode.Id);
 
         if (state is FeaturesViewModel viewModel)

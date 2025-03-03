@@ -11,27 +11,31 @@ namespace Hawaii.Nodes
 
         public CanvasNode(Scene scene) : base(scene)
         {
+            Alignment = Alignment.Center;
+            Size = new SizeF(200, 200);
             Renderer = new NodeRenderer();
-            Center = Anchor.Center;
-            Size = new SizeF(1400, 1000);
-            PropagateScale = true; 
+            IgnoreAncestorScale = false;
         }
 
-        public override bool OnClicked(TouchEventData touchData)
-        {
-            IsZoomed = !IsZoomed;
-            var transform = Scene.GetTransform(Id);
-            transform.Scale = IsZoomed ? new Vector2(1.0f, 1.0f) : new Vector2(2.0f, 2.0f);
-            Scene.SetTransform(Id, transform);
-            return true;
-        }
+        //public override bool OnClicked(TouchEventData touchData)
+        //{
+        //    IsZoomed = !IsZoomed;
+        //    var transform = Scene.GetTransform(Id);
+        //    transform.Scale = IsZoomed ? new Vector2(1.0f, 1.0f) : new Vector2(2.0f, .5f);
+        //    Scene.SetTransform(Id, transform);
+        //    return true;
+        //}
 
         private class NodeRenderer : INodeRenderer
         {
-            private const float CHECKER_SIZE = 32f;
+            private const float CHECKER_SIZE = 25f;
 
             public void Draw(ICanvas canvas, Node node, RectF dirtyRect)
             {
+                canvas.Alpha = 0.6f;
+                canvas.FillColor = Color.FromArgb("#37424A");
+                canvas.FillRectangle(0, 0, dirtyRect.Width, dirtyRect.Height);
+
                 var transform = node.Scene.GetTransform(node.Id);
                 float scale = transform.Scale.X;
                 float tileSize = CHECKER_SIZE * scale;

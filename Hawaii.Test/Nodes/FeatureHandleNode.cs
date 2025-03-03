@@ -20,6 +20,7 @@ public class FeatureHandleNode : Node
     public FeatureHandleNode(Scene scene) : base(scene)
     {
         Renderer = new NodeRenderer();
+        IgnoreAncestorScale = true;
         Center = Anchor.Center;
         Size = new SizeF(50, 50);
     }

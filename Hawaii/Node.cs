@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Xml.Linq;
 using Hawaii.Enums;
 using Hawaii.EventData;
 using Hawaii.Interfaces;
@@ -11,7 +12,7 @@ public class Node
     
     public INodeState State { get; set; }
     
-    public bool PropagateScale { get; set; }
+    public bool IgnoreAncestorScale { get; set; }
     
     public SizeF Size { get; set; }
     
@@ -65,13 +66,34 @@ public class Node
     public void AddChild(Node child)
     {
         Children.Add(child);
+        Scene.HierarchyMap[child.Id] = Id;
+        Scene.AddNode(child, Id);
+        Scene.MarkDirty(child.Id);
+        Scene.SetTransform(child.Id, child.Transform);
     }
     
     public virtual RectF GetLocalBounds()
     {
         return new RectF(0f, 0f, Size.Width, Size.Height);
     }
-    
+
+    public Vector2 GetCenterOffset()
+    {
+        return Center switch
+        {
+            Anchor.TopLeft => Vector2.Zero,
+            Anchor.TopCenter => new Vector2(Size.Width / 2, 0),
+            Anchor.TopRight => new Vector2(Size.Width, 0),
+            Anchor.CenterLeft => new Vector2(0, Size.Height / 2),
+            Anchor.Center => new Vector2(Size.Width / 2, Size.Height / 2),
+            Anchor.CenterRight => new Vector2(Size.Width, Size.Height / 2),
+            Anchor.BottomLeft => new Vector2(0, Size.Height),
+            Anchor.BottomCenter => new Vector2(Size.Width / 2, Size.Height),
+            Anchor.BottomRight => new Vector2(Size.Width, Size.Height),
+            _ => Vector2.Zero
+        };
+    }
+
     public virtual bool ContainsLocalPoint(PointF localPoint)
     {
         var bounds = GetLocalBounds();

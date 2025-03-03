@@ -29,6 +29,7 @@ public class FeatureNode : Node
         Renderer = new NodeRenderer();
         Size = new SizeF(100, 100);
         Center = Anchor.Center;
+        IgnoreAncestorScale = false;
 
         _translationHandle.Feature = this;
         _translationHandle.Transform = new Transform
@@ -46,8 +47,12 @@ public class FeatureNode : Node
         };
         _rotationHandle.Clicked += OnRotationHandleClicked;
         _rotationHandle.Dragged += OnRotationHandleDragged;
-        
-        Children = [ translationHandle, rotationHandle];
+    }
+
+    public void InitHandles()
+    {
+        AddChild(_translationHandle);
+        AddChild(_rotationHandle);
     }
 
     public override bool OnClicked(TouchEventData touchData)
