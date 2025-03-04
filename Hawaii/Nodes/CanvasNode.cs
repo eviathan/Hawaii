@@ -7,6 +7,8 @@ namespace Hawaii.Nodes
 {
     public class CanvasNode : Node
     {
+        public DateTime? _lastClicked { get; set; }
+
         public bool IsZoomed { get; set; }
 
         public CanvasNode(Scene scene) : base(scene)
@@ -19,12 +21,27 @@ namespace Hawaii.Nodes
 
         public override bool OnClicked(TouchEventData touchData)
         {
-            IsZoomed = !IsZoomed;
-            var transform = Scene.GetTransform(Id);
-            transform.Scale = IsZoomed ? new Vector2(1.0f, 1.0f) : new Vector2(2.0f, 2.0f);
-            Scene.SetTransform(Id, transform);
+            if (DateTime.UtcNow - _lastClicked < TimeSpan.FromMilliseconds(500))
+            {
+                IsZoomed = !IsZoomed;
+                var transform = Scene.GetTransform(Id);
+                transform.Scale = IsZoomed ? new Vector2(1.0f, 1.0f) : new Vector2(2.0f, 2.0f);
+                Scene.SetTransform(Id, transform);
+                _lastClicked = null;
+                return true;
+            }
+
+            _lastClicked = DateTime.UtcNow;
             return true;
         }
+
+        public override bool OnDrag(TouchEventData touchData, PointF localDelta)
+        {
+            // Translate the canvas in local space based on the drag delta
+            Translate(new Vector2(localDelta.X, localDelta.Y), Space.Local);
+            return true; // Indicate the event was handled
+        }
+
 
         private class NodeRenderer : INodeRenderer
         {
