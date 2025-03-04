@@ -24,7 +24,7 @@ public class FeatureNode : Node
         Renderer = new NodeRenderer();
         Size = new SizeF(100, 100);
         Center = Anchor.Center;
-        IgnoreAncestorScale = false;
+        IgnoreAncestorScale = true;
 
         Transform = state.Transform;
     }
@@ -73,9 +73,12 @@ public class FeatureNode : Node
     public override bool OnDrag(TouchEventData touchData, PointF localDelta)
     {
         var transform = Scene.GetTransform(Id);
-        transform.Position += new Vector2(localDelta.X, localDelta.Y);
-        Scene.SetTransform(Id, transform);
-        
+        var worldTransform = Scene.GetWorldTransform(Id);
+        var handleWorldPos = Vector2.Transform(Vector2.Zero, worldTransform);
+        var cursorWorldPos = new Vector2(touchData.WorldPoint.X, touchData.WorldPoint.Y);
+        var delta = cursorWorldPos - handleWorldPos; // Move center so handle hits cursor
+        Translate(delta, Space.World);
+
         return true;
     }
     

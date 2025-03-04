@@ -78,7 +78,6 @@ namespace Hawaii
                 transform = GetParentTransform(currentId) * transform;
                 currentId = HierarchyMap[currentId] ?? Guid.Empty;
             }
-
             return transform;
         }
 
@@ -89,12 +88,10 @@ namespace Hawaii
 
             var local = GetTransform(nodeId);
             var node = Nodes[nodeId];
-
-            // Get the node's local bounds and anchor offset
             var localBounds = node.GetLocalBounds();
             Vector2 anchorOffset = node.GetCenterOffset();
 
-            // Local transform: scale, rotate, translate (no anchor offset yet)
+            // Local transform: scale, rotate, translate
             Matrix3x2 localMatrix =
                 Matrix3x2.CreateScale(local.Scale) *
                 Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
@@ -104,28 +101,37 @@ namespace Hawaii
 
             if (!hasParent)
             {
-                // For root nodes, apply anchor offset directly
                 transform = Matrix3x2.CreateTranslation(-anchorOffset) * localMatrix;
             }
             else
             {
-                // Get parent's world transform
-                Matrix3x2 parentTransform = GetParentTransform(HierarchyMap[nodeId].Value);
+                Matrix3x2 parentTransform = GetWorldTransform(HierarchyMap[nodeId].Value);
                 var parentNode = Nodes[HierarchyMap[nodeId].Value];
                 Vector2 parentAnchorOffset = parentNode.GetCenterOffset();
 
                 if (node.IgnoreAncestorScale)
                 {
-                    Vector2 parentWorldPosition = Vector2.Transform(Vector2.Zero, parentTransform);
-                    float parentWorldRotation = (float)Math.Atan2(parentTransform.M21, parentTransform.M11);
-                    Matrix3x2 adjustedParentTransform =
-                        Matrix3x2.CreateRotation(parentWorldRotation) *
-                        Matrix3x2.CreateTranslation(parentWorldPosition);
-                    transform = Matrix3x2.CreateTranslation(-anchorOffset) * localMatrix * adjustedParentTransform;
+                    // Extract parent's transformation components
+                    var parentWorldPos = Vector2.Transform(Vector2.Zero, parentTransform);
+                    float parentRotation = (float)Math.Atan2(parentTransform.M21, parentTransform.M11);
+                    var parentScale = parentTransform.GetScale();
+
+                    // Apply parent's scale only to the node's position, not its size
+                    Vector2 scaledPosition = local.Position * parentScale;
+                    Matrix3x2 adjustedLocalMatrix =
+                        Matrix3x2.CreateScale(local.Scale) *  // Node's own scale only
+                        Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
+                        Matrix3x2.CreateTranslation(scaledPosition);
+
+                    // Position in parent's world space with rotation and translation
+                    Matrix3x2 positionTransform =
+                        Matrix3x2.CreateRotation(parentRotation) *
+                        Matrix3x2.CreateTranslation(parentWorldPos);
+
+                    transform = Matrix3x2.CreateTranslation(-anchorOffset) * adjustedLocalMatrix * positionTransform;
                 }
                 else
                 {
-                    // Apply parent's anchor offset to shift child's position relative to parent's center
                     Matrix3x2 parentOffsetMatrix = Matrix3x2.CreateTranslation(parentAnchorOffset);
                     transform = Matrix3x2.CreateTranslation(-anchorOffset) * localMatrix * parentOffsetMatrix * parentTransform;
                 }

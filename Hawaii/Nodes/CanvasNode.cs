@@ -12,19 +12,19 @@ namespace Hawaii.Nodes
         public CanvasNode(Scene scene) : base(scene)
         {
             Alignment = Alignment.Center;
-            Size = new SizeF(200, 200);
+            Size = new SizeF(float.MaxValue, float.MaxValue);
             Renderer = new NodeRenderer();
             IgnoreAncestorScale = false;
         }
 
-        //public override bool OnClicked(TouchEventData touchData)
-        //{
-        //    IsZoomed = !IsZoomed;
-        //    var transform = Scene.GetTransform(Id);
-        //    transform.Scale = IsZoomed ? new Vector2(1.0f, 1.0f) : new Vector2(2.0f, .5f);
-        //    Scene.SetTransform(Id, transform);
-        //    return true;
-        //}
+        public override bool OnClicked(TouchEventData touchData)
+        {
+            IsZoomed = !IsZoomed;
+            var transform = Scene.GetTransform(Id);
+            transform.Scale = IsZoomed ? new Vector2(1.0f, 1.0f) : new Vector2(2.0f, 2.0f);
+            Scene.SetTransform(Id, transform);
+            return true;
+        }
 
         private class NodeRenderer : INodeRenderer
         {
