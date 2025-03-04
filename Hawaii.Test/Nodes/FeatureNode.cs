@@ -1,8 +1,9 @@
 using System.Numerics;
 using Hawaii.Enums;
 using Hawaii.EventData;
-using Hawaii.Extensions;
 using Hawaii.Interfaces;
+using Hawaii.Test.Models;
+using Hawaii.Test.ViewModel;
 
 namespace Hawaii.Test.Nodes;
 
@@ -10,49 +11,50 @@ public class FeatureNode : Node
 {
     public const float HANDLE_OFFSET = 100f;
 
-    private readonly Scene _scene;
-
-    private readonly FeatureHandleNode _rotationHandle;
+    public FeatureHandleNode RotationHandle;
     
-    private readonly FeatureHandleNode _translationHandle;
+    public FeatureHandleNode TranslationHandle;
     
     public bool WasClicked { get; set; }
     
     public Vector2 DebugCenter;
     
-    public FeatureNode(Scene scene, FeatureHandleNode translationHandle, FeatureHandleNode rotationHandle) : base(scene)
+    public FeatureNode(Scene scene, Feature state) : base(scene)
     {
-        _scene = scene ?? throw new ArgumentNullException(nameof(scene));
-        _translationHandle = translationHandle ?? throw new ArgumentNullException(nameof(translationHandle));
-        _rotationHandle = rotationHandle ?? throw new ArgumentNullException(nameof(rotationHandle));
-        
         Renderer = new NodeRenderer();
         Size = new SizeF(100, 100);
         Center = Anchor.Center;
         IgnoreAncestorScale = false;
 
-        _translationHandle.Feature = this;
-        _translationHandle.Transform = new Transform
+        Transform = state.Transform;
+    }
+
+    public override void Initialise()
+    {
+        // TODO: Encapsulate this into its own method and call twice or move to featurehandle constructor
+        TranslationHandle = new FeatureHandleNode(Scene);
+        TranslationHandle.State = State;
+        TranslationHandle.Feature = this;
+        TranslationHandle.Transform = new Transform
         {
             Position = new Vector2(0f, -HANDLE_OFFSET),
         };
-        _translationHandle.Clicked += OnTranslationHandleClicked;
-        _translationHandle.Dragged += OnTranslationHandleDragged;
-        
-        _rotationHandle.Feature = this;
-        rotationHandle.Color = Colors.Aquamarine;
-        _rotationHandle.Transform = new Transform
+        TranslationHandle.Clicked += OnTranslationHandleClicked;
+        TranslationHandle.Dragged += OnTranslationHandleDragged;
+        AddChild(TranslationHandle);
+
+        RotationHandle = new FeatureHandleNode(Scene);
+        RotationHandle.State = State;
+        RotationHandle.Feature = this;
+        RotationHandle.Color = Colors.Aquamarine;
+        RotationHandle.Transform = new Transform
         {
             Position = new Vector2(0f, HANDLE_OFFSET),
         };
-        _rotationHandle.Clicked += OnRotationHandleClicked;
-        _rotationHandle.Dragged += OnRotationHandleDragged;
-    }
+        RotationHandle.Clicked += OnRotationHandleClicked;
+        RotationHandle.Dragged += OnRotationHandleDragged;
 
-    public void InitHandles()
-    {
-        AddChild(_translationHandle);
-        AddChild(_rotationHandle);
+        AddChild(RotationHandle);
     }
 
     public override bool OnClicked(TouchEventData touchData)
@@ -70,16 +72,16 @@ public class FeatureNode : Node
 
     public override bool OnDrag(TouchEventData touchData, PointF localDelta)
     {
-        var transform = _scene.GetTransform(Id);
+        var transform = Scene.GetTransform(Id);
         transform.Position += new Vector2(localDelta.X, localDelta.Y);
-        _scene.SetTransform(Id, transform);
+        Scene.SetTransform(Id, transform);
         
         return true;
     }
     
     private void OnTranslationHandleClicked(TouchEventData touchData)
     {
-        _translationHandle.WasClicked = !_translationHandle.WasClicked;
+        TranslationHandle.WasClicked = !TranslationHandle.WasClicked;
     }
 
     private void OnTranslationHandleDragged((TouchEventData touchData, PointF localDelta) e)
@@ -96,7 +98,7 @@ public class FeatureNode : Node
     private void OnRotationHandleClicked(TouchEventData touchData)
     {
         Console.WriteLine($"Rot Clicked at Local: {touchData.LocalPoint}, Parent: {touchData.ParentPoint}, World: {touchData.WorldPoint}");
-        _rotationHandle.WasClicked = !_rotationHandle.WasClicked;
+        RotationHandle.WasClicked = !RotationHandle.WasClicked;
     }
 
     
@@ -104,8 +106,8 @@ public class FeatureNode : Node
     {
         Console.WriteLine($"Rot Dragged at Local: {e.touchData.LocalPoint}, Parent: {e.touchData.ParentPoint}, World: {e.touchData.WorldPoint}");
         
-        var transform = _scene.GetTransform(Id);
-        var worldTransform = _scene.GetParentTransform(Id);
+        var transform = Scene.GetTransform(Id);
+        var worldTransform = Scene.GetParentTransform(Id);
         
         var cursor = new Vector2(e.touchData.WorldPoint.X, e.touchData.WorldPoint.Y);
         
@@ -123,7 +125,7 @@ public class FeatureNode : Node
         
         transform.Rotation = angleDegrees;
         
-        _scene.SetTransform(Id, transform);
+        Scene.SetTransform(Id, transform);
         
         DebugCenter = new Vector2(
             e.touchData.ParentPoint.X,

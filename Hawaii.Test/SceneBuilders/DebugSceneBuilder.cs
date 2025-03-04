@@ -2,6 +2,8 @@
 using Hawaii.Nodes;
 using Hawaii.Test.Nodes;
 using Hawaii.Test.ViewModel;
+using System.Diagnostics;
+using System.Numerics;
 
 namespace Hawaii.Test.SceneBuilders
 {
@@ -32,10 +34,10 @@ namespace Hawaii.Test.SceneBuilders
             {
                 foreach (var feature in viewModel.Features)
                 {
-                    var featureNode = _serviceProvider.GetRequiredService<FeatureNode>();
+                    var featureNode = new FeatureNode(_scene, feature);
                     _backgroundImage.AddChild(featureNode);
-                    featureNode.InitHandles();
 
+                    featureNode.Initialise();
                 }
             }
 

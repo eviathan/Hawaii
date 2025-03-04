@@ -34,7 +34,10 @@ public class Node
     {
         Scene = scene ?? throw new ArgumentNullException(nameof(scene));
     }
-    
+
+    public virtual void Initialise() { }
+
+
     public virtual void Translate(Vector2 delta, Space space)
     {
         var transform = Scene.GetTransform(Id);

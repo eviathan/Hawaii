@@ -21,7 +21,7 @@ public class FeaturesViewModel : INodeState
              Name = "Feature 2",
              Transform = new Transform
              {
-                 Position = new Vector2(400, 400)
+                 Position = new Vector2(600, 400)
              }
          },
         new Feature
