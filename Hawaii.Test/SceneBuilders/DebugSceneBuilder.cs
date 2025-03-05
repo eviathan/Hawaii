@@ -41,7 +41,7 @@ namespace Hawaii.Test.SceneBuilders
                 }
             }
 
-            Console.WriteLine($"Built HierarchyMap: {string.Join(", ", _scene.HierarchyMap.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
+            //Console.WriteLine($"Built HierarchyMap: {string.Join(", ", _scene.HierarchyMap.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
         }
     }
 }

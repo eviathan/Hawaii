@@ -69,10 +69,9 @@ public class EventDispatcher
             else
             {
                 PointF parentPoint = worldPoint;
-                if (_scene.HierarchyMap[_draggedNode.Id].HasValue)
+                if (_draggedNode.Parent != null)
                 {
-                    var parent = _scene.Nodes[_scene.HierarchyMap[_draggedNode.Id].Value];
-                    parentPoint = TransformToLocal(parent, worldPoint);
+                    parentPoint = TransformToLocal(_draggedNode.Parent, worldPoint);
                 }
                 var touchData = new TouchEventData(worldPoint, parentPoint, TransformToLocal(_draggedNode, worldPoint));
                 var localDelta = TransformDeltaToLocal(_draggedNode, delta);
@@ -148,11 +147,12 @@ public class EventDispatcher
             if (node.ContainsLocalPoint(localPoint))
             {
                 PointF parentPoint = worldPoint;
-                if (_scene.HierarchyMap[node.Id].HasValue)
+
+                if (node.Parent != null)
                 {
-                    var parent = _scene.Nodes[_scene.HierarchyMap[node.Id].Value];
-                    parentPoint = TransformToLocal(parent, worldPoint);
+                    parentPoint = TransformToLocal(node.Parent, worldPoint);
                 }
+
                 var touchData = new TouchEventData(worldPoint, parentPoint, localPoint);
                 if (handler(node, touchData))
                     break;
@@ -173,9 +173,9 @@ public class EventDispatcher
             {
                 PointF parentPointA = pointA;
                 PointF parentPointB = pointB;
-                if (_scene.HierarchyMap[node.Id].HasValue)
+                if (node.Parent != null)
                 {
-                    var parent = _scene.Nodes[_scene.HierarchyMap[node.Id].Value];
+                    var parent = node.Parent;
                     parentPointA = TransformToLocal(parent, pointA);
                     parentPointB = TransformToLocal(parent, pointB);
                 }
@@ -202,15 +202,12 @@ public class EventDispatcher
             {
                 stack.Push((node, true));
                 
-                var childIds = _scene.HierarchyMap
-                    .Where(kvp => kvp.Value == node.Id)
-                    .Select(kvp => kvp.Key)
-                    .Reverse();
+                var children = node.Children;
+                children.Reverse();
                 
-                foreach (var childId in childIds)
+                foreach (var child in children)
                 {
-                    if (_scene.Nodes.TryGetValue(childId, out var child))
-                        stack.Push((child, false));
+                    stack.Push((child, false));
                 }
             }
             else

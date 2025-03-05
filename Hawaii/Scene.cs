@@ -11,18 +11,7 @@ namespace Hawaii
     {
         public Node RootNode { get; }
 
-        public Dictionary<Guid, Guid?> HierarchyMap { get; } = new();
-
         public Dictionary<Guid, Node> Nodes { get; } = new();
-
-
-        private readonly Dictionary<Guid, Transform> _transforms = [];
-
-        private readonly Dictionary<Guid, Matrix3x2> _worldTransformCache = new();
-
-        private readonly Dictionary<Guid, RectF> _worldBoundsCache = new();
-
-        private readonly List<RectF> _dirtyRegions = new();
 
         public Action? InvalidateView { get; set; }
 
@@ -38,54 +27,50 @@ namespace Hawaii
 
         public void AddNode(Node node, Guid? parentId = null)
         {
+            if (parentId != null && Nodes.TryGetValue(parentId.Value, out var parentNode))
+            {
+                parentNode.AddChild(node);
+            }
+
             Nodes[node.Id] = node;
-            HierarchyMap[node.Id] = parentId;
-            MarkDirty(node.Id);
+            TransformChanged?.Invoke(node.Id);
         }
         
         public void ClearNodes()
         {
-            Nodes.Clear();            
-            HierarchyMap.Clear();
-            _transforms.Clear();
-            _worldTransformCache.Clear();
-            _worldBoundsCache.Clear();
-            _dirtyRegions.Clear();
-
+            Nodes.Clear();
             AddNode(RootNode);
         }
 
         public Transform GetTransform(Guid id)
         {
-            return _transforms.TryGetValue(id, out var transform)
-                ? transform
+            return Nodes.TryGetValue(id, out var node)
+                ? node.Transform
                 : new Transform();
         }
 
-        public void SetTransform(Guid id, Transform transform)
+        public void InvalidateTransform(Guid id)
         {
-            _transforms[id] = transform;
             TransformChanged?.Invoke(id);
         }
-
 
         public Matrix3x2 GetWorldTransform(Guid nodeId)
         {
             Matrix3x2 transform = Matrix3x2.Identity;
-            var currentId = nodeId;
-            while (currentId != Guid.Empty)
+            Guid? currentId = nodeId;
+            while (currentId != null)
             {
-                transform = GetParentTransform(currentId) * transform;
-                currentId = HierarchyMap[currentId] ?? Guid.Empty;
+                if (!Nodes.TryGetValue(currentId.Value, out var currentNode))
+                    break;
+                transform = GetParentTransform(currentId.Value) * transform;
+                currentId = currentNode?.Parent?.Id;
             }
             return transform;
         }
 
         public Matrix3x2 GetParentTransform(Guid nodeId)
         {
-            if (_worldTransformCache.TryGetValue(nodeId, out var transform))
-                return transform;
-
+            Matrix3x2 transform;
             var local = GetTransform(nodeId);
             var node = Nodes[nodeId];
             var localBounds = node.GetLocalBounds();
@@ -94,10 +79,10 @@ namespace Hawaii
             // Local transform: scale, rotate, translate
             Matrix3x2 localMatrix =
                 Matrix3x2.CreateScale(local.Scale) *
-                Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
+                Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians()) *
                 Matrix3x2.CreateTranslation(local.Position);
 
-            bool hasParent = HierarchyMap[nodeId].HasValue;
+            bool hasParent = node.Parent != null;
 
             if (!hasParent)
             {
@@ -105,8 +90,9 @@ namespace Hawaii
             }
             else
             {
-                Matrix3x2 parentTransform = GetWorldTransform(HierarchyMap[nodeId].Value);
-                var parentNode = Nodes[HierarchyMap[nodeId].Value];
+                var parentNode = node.Parent;
+
+                Matrix3x2 parentTransform = GetWorldTransform(parentNode.Id);
                 Vector2 parentAnchorOffset = parentNode.GetCenterOffset();
 
                 if (node.IgnoreAncestorScale)
@@ -120,7 +106,7 @@ namespace Hawaii
                     Vector2 scaledPosition = local.Position * parentScale;
                     Matrix3x2 adjustedLocalMatrix =
                         Matrix3x2.CreateScale(local.Scale) *  // Node's own scale only
-                        Matrix3x2.CreateRotation(local.Rotation * MathF.PI / 180f) *
+                        Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians()) *
                         Matrix3x2.CreateTranslation(scaledPosition);
 
                     // Position in parent's world space with rotation and translation
@@ -137,39 +123,36 @@ namespace Hawaii
                 }
             }
 
-            _worldTransformCache[nodeId] = transform;
             return transform;
         }
 
         public RectF GetWorldBounds(Guid nodeId)
         {
-            if (!_worldBoundsCache.TryGetValue(nodeId, out var bounds))
+            var bounds = new RectF();
+            var node = Nodes[nodeId];
+            var localBounds = node.GetLocalBounds();
+            var worldTransform = GetWorldTransform(nodeId);
+            var localScale = GetTransform(nodeId).Scale;
+
+            var effectiveBounds = node.IgnoreAncestorScale
+                ? localBounds
+                : new RectF(0, 0, localBounds.Width * localScale.X, localBounds.Height * localScale.Y);
+
+            var corners = new[]
             {
-                var node = Nodes[nodeId];
-                var localBounds = node.GetLocalBounds();
-                var worldTransform = GetWorldTransform(nodeId);
-                var localScale = GetTransform(nodeId).Scale;
-
-                var effectiveBounds = node.IgnoreAncestorScale
-                    ? localBounds
-                    : new RectF(0, 0, localBounds.Width * localScale.X, localBounds.Height * localScale.Y);
-
-                var corners = new[]
-                {
-                    Vector2.Transform(new Vector2(effectiveBounds.Left, effectiveBounds.Top), worldTransform),
-                    Vector2.Transform(new Vector2(effectiveBounds.Right, effectiveBounds.Top), worldTransform),
-                    Vector2.Transform(new Vector2(effectiveBounds.Right, effectiveBounds.Bottom), worldTransform),
-                    Vector2.Transform(new Vector2(effectiveBounds.Left, effectiveBounds.Bottom), worldTransform)
-                };
+                Vector2.Transform(new Vector2(effectiveBounds.Left, effectiveBounds.Top), worldTransform),
+                Vector2.Transform(new Vector2(effectiveBounds.Right, effectiveBounds.Top), worldTransform),
+                Vector2.Transform(new Vector2(effectiveBounds.Right, effectiveBounds.Bottom), worldTransform),
+                Vector2.Transform(new Vector2(effectiveBounds.Left, effectiveBounds.Bottom), worldTransform)
+            };
                 
-                var minX = corners.Min(p => p.X);
-                var maxX = corners.Max(p => p.X);
-                var minY = corners.Min(p => p.Y);
-                var maxY = corners.Max(p => p.Y);
+            var minX = corners.Min(p => p.X);
+            var maxX = corners.Max(p => p.X);
+            var minY = corners.Min(p => p.Y);
+            var maxY = corners.Max(p => p.Y);
                 
-                bounds = new RectF(minX, minY, maxX - minX, maxY - minY);
-                _worldBoundsCache[nodeId] = bounds;
-            }
+            bounds = new RectF(minX, minY, maxX - minX, maxY - minY);
+
             return bounds;
         }
 
@@ -182,59 +165,18 @@ namespace Hawaii
         {
             yield return node;
 
-            var childIds = HierarchyMap
-                .Where(kvp => kvp.Value == node.Id)
-                .Select(kvp => kvp.Key);
-
-            foreach (var childId in childIds)
-            {
-                if (!Nodes.TryGetValue(childId, out var child))
-                    continue;
-
+            foreach (var child in node.Children)
                 foreach (var descendant in TraverseDepthFirst(child))
-                {
                     yield return descendant;
-                }
-            }
-        }
-
-        public void MarkDirty(Guid nodeId)
-        {
-            if (Nodes.ContainsKey(nodeId))
-            {
-                _dirtyRegions.Add(GetWorldBounds(nodeId));
-                foreach (var child in Nodes[nodeId].Children)
-                    if (Nodes.ContainsKey(child.Id))
-                        MarkDirty(child.Id);
-            }
-        }
-
-        public RectF GetDirtyRegion()
-        {
-            if (_dirtyRegions.Count == 0)
-                return RectF.Zero;
-
-            var minX = _dirtyRegions.Min(rect => rect.Left);
-            var minY = _dirtyRegions.Min(rect => rect.Top);
-            var maxX = _dirtyRegions.Max(rect => rect.Right);
-            var maxY = _dirtyRegions.Max(rect => rect.Bottom);
-            _dirtyRegions.Clear();
-
-            return new RectF(minX, minY, maxX - minX, maxY - minY);
         }
 
         private void InvalidateNode(Guid nodeId)
         {
-            _worldTransformCache.Remove(nodeId);
-            _worldBoundsCache.Remove(nodeId);
-            MarkDirty(nodeId);
+            if (!Nodes.TryGetValue(nodeId, out var node))
+                return;
 
-            var childIds = HierarchyMap
-                .Where(kvp => kvp.Value == nodeId)
-                .Select(kvp => kvp.Key);
-
-            foreach (var childId in childIds)
-                InvalidateNode(childId);
+            foreach (var child in node.Children)
+                InvalidateNode(child.Id);
 
             InvalidateView?.Invoke();
         }

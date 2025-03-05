@@ -26,7 +26,7 @@ namespace Hawaii.Nodes
                 IsZoomed = !IsZoomed;
                 var transform = Scene.GetTransform(Id);
                 transform.Scale = IsZoomed ? new Vector2(1.0f, 1.0f) : new Vector2(2.0f, 2.0f);
-                Scene.SetTransform(Id, transform);
+                Scene.InvalidateTransform(Id);
                 _lastClicked = null;
                 return true;
             }

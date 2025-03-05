@@ -24,6 +24,8 @@ public class Node
 
     public PositionMode Position { get; set; } = PositionMode.Relative;
 
+    public Node Parent { get; set; }
+
     public List<Node> Children { get; set; } = [];
 
     public INodeRenderer Renderer { get; set; }
@@ -52,8 +54,8 @@ public class Node
             var currentWorldPos = Vector2.Transform(Vector2.Zero, worldTransform);
             var newWorldPos = currentWorldPos + delta;
             
-            var parentTransform = Scene.HierarchyMap[Id].HasValue
-                ? Scene.GetWorldTransform(Scene.HierarchyMap[Id].Value)
+            var parentTransform = Parent != null
+                ? Scene.GetWorldTransform(Parent.Id)
                 : Matrix3x2.Identity;
             
             if (Matrix3x2.Invert(parentTransform, out var inverseParent))
@@ -62,17 +64,16 @@ public class Node
             }
         }
         
-        Scene.SetTransform(Id, transform);
+        Scene.InvalidateTransform(Id);
     }
     
 
     public void AddChild(Node child)
     {
+        child.Parent = this;
         Children.Add(child);
-        Scene.HierarchyMap[child.Id] = Id;
-        Scene.AddNode(child, Id);
-        Scene.MarkDirty(child.Id);
-        Scene.SetTransform(child.Id, child.Transform);
+        Scene.Nodes[child.Id] = child;
+        Scene.InvalidateTransform(child.Id);
     }
     
     public virtual RectF GetLocalBounds()

@@ -30,16 +30,14 @@ public class FeatureSceneBuilder : ISceneBuilder
                 var featureNode = _serviceProvider.GetRequiredService<FeatureNode>();
                 
                 _scene.AddNode(featureNode, background.Id);
-                 _scene.SetTransform(featureNode.Id, feature.Transform);
                 
                 foreach (var child in featureNode.Children)
                 {
                     _scene.AddNode(child, featureNode.Id);
-                     _scene.SetTransform(child.Id, child.Transform);
                 }
             }
         }
         
-        Console.WriteLine($"Built HierarchyMap: {string.Join(", ", _scene.HierarchyMap.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
+        //Console.WriteLine($"Built HierarchyMap: {string.Join(", ", _scene.HierarchyMap.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
     }
 }

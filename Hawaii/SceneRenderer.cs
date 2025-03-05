@@ -94,6 +94,7 @@ public class SceneRenderer : BindableObject, IDrawable
             canvas.RestoreState();
         }
     }
+
     
     private PointF TransformToWorld(PointF screenPoint)
     {

@@ -128,7 +128,7 @@ public class FeatureNode : Node
         
         transform.Rotation = angleDegrees;
         
-        Scene.SetTransform(Id, transform);
+        Scene.InvalidateTransform(Id);
         
         DebugCenter = new Vector2(
             e.touchData.ParentPoint.X,
