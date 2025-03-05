@@ -21,7 +21,9 @@ public class EventDispatcher
     private (PointF A, PointF B)? _lastTwoPoints;
     
     private DateTime _singleTouchStartTime;
-    
+
+    private Vector2 _smoothedDelta;
+
     private Node _draggedNode;
     
     private Node _twoFingerDraggedNode;
@@ -46,17 +48,19 @@ public class EventDispatcher
     {
         if (!_lastSinglePoint.HasValue)
             return;
-    
-        var delta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
+
+        var rawDelta = new PointF(worldPoint.X - _lastSinglePoint.Value.X, worldPoint.Y - _lastSinglePoint.Value.Y);
         var timeElapsed = (DateTime.Now - _singleTouchStartTime).TotalMilliseconds;
-    
+
+        _smoothedDelta = Vector2.Lerp(_smoothedDelta, new Vector2(rawDelta.X, rawDelta.Y), 0.5f);
+        var delta = new PointF(_smoothedDelta.X, _smoothedDelta.Y);
+
         if (timeElapsed > CLICK_THRESHOLD_IN_MS || delta.Length() > DRAG_THRESHHOLD_IN_PIXELS)
         {
             if (_draggedNode == null)
             {
                 PropagateEvent(worldPoint, (node, touchData) =>
                 {
-                    // Console.WriteLine($"WorldPoint: ({worldPoint.X}, {worldPoint.Y})");
                     var localDelta = TransformDeltaToLocal(node, delta);
                     if (node.OnDrag(touchData, localDelta))
                     {
@@ -75,10 +79,9 @@ public class EventDispatcher
                 }
                 var touchData = new TouchEventData(worldPoint, parentPoint, TransformToLocal(_draggedNode, worldPoint));
                 var localDelta = TransformDeltaToLocal(_draggedNode, delta);
-            
                 _draggedNode.OnDrag(touchData, localDelta);
             }
-        
+
             _lastSinglePoint = worldPoint;
             _scene.InvalidateView?.Invoke();
         }
@@ -231,17 +234,17 @@ public class EventDispatcher
         var localPoint = Vector2.Transform(new Vector2(worldPoint.X, worldPoint.Y), inverse);
 
         // Adjust for the node's anchor (Center) - shift local origin to match anchor
-        Vector2 anchorOffset = node.Center switch
+        Vector2 anchorOffset = node.Origin switch
         {
-            Anchor.TopLeft => Vector2.Zero,
-            Anchor.TopCenter => new Vector2(node.Size.Width / 2, 0),
-            Anchor.TopRight => new Vector2(node.Size.Width, 0),
-            Anchor.CenterLeft => new Vector2(0, node.Size.Height / 2),
-            Anchor.Center => new Vector2(node.Size.Width / 2, node.Size.Height / 2),
-            Anchor.CenterRight => new Vector2(node.Size.Width, node.Size.Height / 2),
-            Anchor.BottomLeft => new Vector2(0, node.Size.Height),
-            Anchor.BottomCenter => new Vector2(node.Size.Width / 2, node.Size.Height),
-            Anchor.BottomRight => new Vector2(node.Size.Width, node.Size.Height),
+            Origin.TopLeft => Vector2.Zero,
+            Origin.TopCenter => new Vector2(node.Size.Width / 2, 0),
+            Origin.TopRight => new Vector2(node.Size.Width, 0),
+            Origin.CenterLeft => new Vector2(0, node.Size.Height / 2),
+            Origin.Center => new Vector2(node.Size.Width / 2, node.Size.Height / 2),
+            Origin.CenterRight => new Vector2(node.Size.Width, node.Size.Height / 2),
+            Origin.BottomLeft => new Vector2(0, node.Size.Height),
+            Origin.BottomCenter => new Vector2(node.Size.Width / 2, node.Size.Height),
+            Origin.BottomRight => new Vector2(node.Size.Width, node.Size.Height),
             _ => Vector2.Zero
         };
 

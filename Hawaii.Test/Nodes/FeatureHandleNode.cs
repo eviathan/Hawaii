@@ -20,8 +20,9 @@ public class FeatureHandleNode : Node
     public FeatureHandleNode(Scene scene) : base(scene)
     {
         Renderer = new NodeRenderer();
-        Center = Anchor.Center;
+        Origin = Origin.Center;
         Size = new SizeF(50, 50);
+        IgnoreAncestorScale = true;
     }
 
     public override bool OnClicked(TouchEventData touchData)

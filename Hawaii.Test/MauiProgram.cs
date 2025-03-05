@@ -25,10 +25,10 @@ public static class MauiProgram
 #endif
 
 		builder.Services.AddHawaii();
+
+        builder.Services.AddScoped<SceneCamera>();
+        builder.Services.AddScoped<ISceneBuilder, DebugSceneBuilder>(); 
 		
-		builder.Services.AddScoped<ISceneBuilder, DebugSceneBuilder>(); 
-		
-		builder.Services.AddTransient<CanvasNode>();
 		builder.Services.AddTransient<ImageNode>();
 		builder.Services.AddTransient<FeatureNode>();
 		builder.Services.AddTransient<FeatureHandleNode>();

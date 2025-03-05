@@ -14,9 +14,9 @@ namespace Hawaii
 
         public event Action<Guid>? TransformChanged;
 
-        public Scene()
+        public Scene(SceneCamera camera)
         {
-            RootNode = new RootNode(this);
+            RootNode = new RootNode(this, camera);
             AddNode(RootNode);
 
             TransformChanged += InvalidateNode;
@@ -68,53 +68,50 @@ namespace Hawaii
             var node = Nodes[nodeId];
             var local = node.Transform;
             var localBounds = node.GetLocalBounds();
-            var anchorOffset = node.GetCenterOffset();
+            var originOffset = node.GetOriginOffset();
+            var alignmentOffset = node.GetAlignmentOffset();
 
-            // Local transform: scale, rotate, translate
+            // Local transform: scale, rotate, translate (including alignment)
             var localMatrix =
                 Matrix3x2.CreateScale(local.Scale) *
                 Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians()) *
-                Matrix3x2.CreateTranslation(local.Position);
+                Matrix3x2.CreateTranslation(local.Position + alignmentOffset);
 
             var hasParent = node.Parent != null;
 
             if (!hasParent)
             {
-                transform = Matrix3x2.CreateTranslation(-anchorOffset) * localMatrix;
+                transform = Matrix3x2.CreateTranslation(-originOffset) * localMatrix;
             }
             else
             {
                 var parentNode = node.Parent;
-
                 var parentTransform = GetWorldTransform(parentNode.Id);
-                var parentAnchorOffset = parentNode.GetCenterOffset();
+                var parentAnchorOffset = parentNode.GetOriginOffset();
 
-                if (node.IgnoreAncestorScale)
-                {
-                    // Extract parent's transformation components
-                    var parentWorldPos = Vector2.Transform(Vector2.Zero, parentTransform);
-                    float parentRotation = (float)Math.Atan2(parentTransform.M21, parentTransform.M11);
-                    var parentScale = parentTransform.GetScale();
+                //if (node.IgnoreAncestorScale)
+                //{
+                //    var parentWorldPos = Vector2.Transform(Vector2.Zero, parentTransform);
+                //    float parentRotation = (float)Math.Atan2(parentTransform.M21, parentTransform.M11);
+                //    var parentScale = parentTransform.GetScale();
 
-                    // Apply parent's scale only to the node's position, not its size
-                    var scaledPosition = local.Position * parentScale;
-                    var adjustedLocalMatrix =
-                        Matrix3x2.CreateScale(local.Scale) *  // Node's own scale only
-                        Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians()) *
-                        Matrix3x2.CreateTranslation(scaledPosition);
+                //    var scaledPosition = (local.Position + alignmentOffset) * parentScale;
+                //    var adjustedLocalMatrix =
+                //        Matrix3x2.CreateScale(local.Scale) *
+                //        Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians()) *
+                //        Matrix3x2.CreateTranslation(scaledPosition);
 
-                    // Position in parent's world space with rotation and translation
-                    var positionTransform =
-                        Matrix3x2.CreateRotation(parentRotation) *
-                        Matrix3x2.CreateTranslation(parentWorldPos);
+                //    var positionTransform =
+                //        Matrix3x2.CreateRotation(parentRotation) *
+                //        Matrix3x2.CreateTranslation(parentWorldPos);
 
-                    transform = Matrix3x2.CreateTranslation(-anchorOffset) * adjustedLocalMatrix * positionTransform;
-                }
-                else
-                {
-                    var parentOffsetMatrix = Matrix3x2.CreateTranslation(parentAnchorOffset);
-                    transform = Matrix3x2.CreateTranslation(-anchorOffset) * localMatrix * parentOffsetMatrix * parentTransform;
-                }
+                //    transform = Matrix3x2.CreateTranslation(-originOffset) * adjustedLocalMatrix * positionTransform;
+                //}
+                //else
+                //{
+                var parentOffsetMatrix = Matrix3x2.CreateTranslation(parentAnchorOffset);
+                    transform = Matrix3x2.CreateTranslation(-originOffset) * localMatrix * parentOffsetMatrix * parentTransform;
+                //}
             }
 
             return transform;

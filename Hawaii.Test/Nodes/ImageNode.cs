@@ -1,5 +1,6 @@
 using System.Numerics;
 using Hawaii.Enums;
+using Hawaii.EventData;
 using Hawaii.Interfaces;
 
 namespace Hawaii.Test.Nodes;
@@ -8,10 +9,17 @@ public class ImageNode : Node
 {    
     public ImageNode(Scene scene) : base(scene)
     {
-        Renderer = new NodeRenderer();
         Size = new SizeF(600, 400);
-        Transform.Position = new Vector2(100, 100);
+        Origin = Origin.TopLeft;
+        Alignment = Alignment.Center;
+        Renderer = new NodeRenderer();
     }
+
+    public override bool OnClicked(TouchEventData touchData)
+    {
+        return true;
+    }
+
 
     private class NodeRenderer : INodeRenderer
     {

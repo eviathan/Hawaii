@@ -1,6 +1,6 @@
 namespace Hawaii.Enums;
 
-public enum Anchor
+public enum Origin
 {
     TopLeft,    // (0, 0)
     TopCenter,  // (Width/2, 0)

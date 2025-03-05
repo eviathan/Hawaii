@@ -1,5 +1,4 @@
 using System.Numerics;
-using System.Xml.Linq;
 using Hawaii.Enums;
 using Hawaii.EventData;
 using Hawaii.Interfaces;
@@ -18,7 +17,7 @@ public class Node
     
     public Transform Transform { get; set; } = new();
 
-    public Anchor Center { get; set; } = Anchor.TopLeft;
+    public Origin Origin { get; set; } = Origin.TopLeft;
 
     public Alignment Alignment { get; set; } = Alignment.None;
 
@@ -79,37 +78,69 @@ public class Node
         return new RectF(0f, 0f, Size.Width, Size.Height);
     }
 
-    public Vector2 GetCenterOffset()
+    public virtual Vector2 GetOriginOffset()
     {
-        return Center switch
+        if (Size.Width == float.MaxValue || Size.Height == float.MaxValue)
+            return Origin == Origin.Center ? Vector2.Zero : GetFiniteOriginOffset();
+
+        return GetFiniteOriginOffset();
+    }
+
+    private Vector2 GetFiniteOriginOffset()
+    {
+        var halfWidth = Size.Width / 2;
+        var halfHeight = Size.Height / 2;
+        return Origin switch
         {
-            Anchor.TopLeft => Vector2.Zero,
-            Anchor.TopCenter => new Vector2(Size.Width / 2, 0),
-            Anchor.TopRight => new Vector2(Size.Width, 0),
-            Anchor.CenterLeft => new Vector2(0, Size.Height / 2),
-            Anchor.Center => new Vector2(Size.Width / 2, Size.Height / 2),
-            Anchor.CenterRight => new Vector2(Size.Width, Size.Height / 2),
-            Anchor.BottomLeft => new Vector2(0, Size.Height),
-            Anchor.BottomCenter => new Vector2(Size.Width / 2, Size.Height),
-            Anchor.BottomRight => new Vector2(Size.Width, Size.Height),
+            Origin.TopLeft => Vector2.Zero,
+            Origin.TopCenter => new Vector2(halfWidth, 0),
+            Origin.TopRight => new Vector2(Size.Width, 0),
+            Origin.CenterLeft => new Vector2(0, halfHeight),
+            Origin.Center => new Vector2(halfWidth, halfHeight),
+            Origin.CenterRight => new Vector2(Size.Width, halfHeight),
+            Origin.BottomLeft => new Vector2(0, Size.Height),
+            Origin.BottomCenter => new Vector2(halfWidth, Size.Height),
+            Origin.BottomRight => new Vector2(Size.Width, Size.Height),
             _ => Vector2.Zero
         };
+    }
+
+    public virtual Vector2 GetAlignmentOffset()
+    {
+        if (Alignment == Alignment.None || Size.Width == float.MaxValue || Size.Height == float.MaxValue)
+            return Vector2.Zero;
+
+        var halfWidth = Size.Width / 2;
+        var halfHeight = Size.Height / 2;
+        var originPoint = GetOriginOffset();
+
+        Vector2 alignmentPoint = Alignment switch
+        {
+            Alignment.Center => new Vector2(halfWidth, halfHeight),
+            Alignment.TopLeft => Vector2.Zero,
+            Alignment.TopRight => new Vector2(Size.Width, 0),
+            Alignment.BottomLeft => new Vector2(0, Size.Height),
+            Alignment.BottomRight => new Vector2(Size.Width, Size.Height),
+            _ => originPoint
+        };
+
+        return -(alignmentPoint - originPoint);
     }
 
     public virtual bool ContainsLocalPoint(PointF localPoint)
     {
         var bounds = GetLocalBounds();
-        Vector2 anchorOffset = Center switch
+        Vector2 anchorOffset = Origin switch
         {
-            Anchor.TopLeft => Vector2.Zero,
-            Anchor.TopCenter => new Vector2(Size.Width / 2, 0),
-            Anchor.TopRight => new Vector2(Size.Width, 0),
-            Anchor.CenterLeft => new Vector2(0, Size.Height / 2),
-            Anchor.Center => new Vector2(Size.Width / 2, Size.Height / 2),
-            Anchor.CenterRight => new Vector2(Size.Width, Size.Height / 2),
-            Anchor.BottomLeft => new Vector2(0, Size.Height),
-            Anchor.BottomCenter => new Vector2(Size.Width / 2, Size.Height),
-            Anchor.BottomRight => new Vector2(Size.Width, Size.Height),
+            Origin.TopLeft => Vector2.Zero,
+            Origin.TopCenter => new Vector2(Size.Width / 2, 0),
+            Origin.TopRight => new Vector2(Size.Width, 0),
+            Origin.CenterLeft => new Vector2(0, Size.Height / 2),
+            Origin.Center => new Vector2(Size.Width / 2, Size.Height / 2),
+            Origin.CenterRight => new Vector2(Size.Width, Size.Height / 2),
+            Origin.BottomLeft => new Vector2(0, Size.Height),
+            Origin.BottomCenter => new Vector2(Size.Width / 2, Size.Height),
+            Origin.BottomRight => new Vector2(Size.Width, Size.Height),
             _ => Vector2.Zero
         };
         
