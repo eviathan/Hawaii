@@ -41,12 +41,10 @@ public class Node
 
 
     public virtual void Translate(Vector2 delta, Space space)
-    {
-        var transform = Scene.GetTransform(Id);
-        
+    {        
         if (space == Space.Local)
         {
-            transform.Position += delta;
+            Transform.Position += delta;
         }
         else
         {
@@ -60,7 +58,7 @@ public class Node
             
             if (Matrix3x2.Invert(parentTransform, out var inverseParent))
             {
-                transform.Position = Vector2.Transform(newWorldPos, inverseParent);
+                Transform.Position = Vector2.Transform(newWorldPos, inverseParent);
             }
         }
         

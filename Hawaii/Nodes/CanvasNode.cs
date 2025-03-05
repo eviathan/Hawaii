@@ -24,7 +24,7 @@ namespace Hawaii.Nodes
             if (DateTime.UtcNow - _lastClicked < TimeSpan.FromMilliseconds(500))
             {
                 IsZoomed = !IsZoomed;
-                var transform = Scene.GetTransform(Id);
+                var transform = Scene.Nodes[Id].Transform;
                 transform.Scale = IsZoomed ? new Vector2(1.0f, 1.0f) : new Vector2(2.0f, 2.0f);
                 Scene.InvalidateTransform(Id);
                 _lastClicked = null;
@@ -53,8 +53,7 @@ namespace Hawaii.Nodes
                 canvas.FillColor = Color.FromArgb("#37424A");
                 canvas.FillRectangle(0, 0, dirtyRect.Width, dirtyRect.Height);
 
-                var transform = node.Scene.GetTransform(node.Id);
-                float scale = transform.Scale.X;
+                float scale = node.Transform.Scale.X;
                 float tileSize = CHECKER_SIZE * scale;
 
                 // Use viewport (dirtyRect) bounds in screen space, transform to local

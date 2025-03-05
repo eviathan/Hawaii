@@ -17,7 +17,8 @@ public class ImageNode : Node
     {
         public void Draw(ICanvas canvas, Node node, RectF dirtyRect)
         {
-            if (node is not ImageNode imageNode) return;
+            if (node is not ImageNode imageNode)
+                return;
 
             canvas.Alpha = .6f;
             canvas.FillColor = Colors.Coral;

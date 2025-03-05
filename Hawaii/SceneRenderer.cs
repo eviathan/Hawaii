@@ -82,7 +82,7 @@ public class SceneRenderer : BindableObject, IDrawable
         foreach (var node in orderedNodes)
         {
             var transform = _scene.GetParentTransform(node.Id);
-            var localScale = _scene.GetTransform(node.Id).Scale;
+            var localScale = node.Transform.Scale;
         
             canvas.SaveState();
             canvas.ConcatenateTransform(transform);

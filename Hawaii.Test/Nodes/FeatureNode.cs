@@ -3,7 +3,6 @@ using Hawaii.Enums;
 using Hawaii.EventData;
 using Hawaii.Interfaces;
 using Hawaii.Test.Models;
-using Hawaii.Test.ViewModel;
 
 namespace Hawaii.Test.Nodes;
 
@@ -72,7 +71,6 @@ public class FeatureNode : Node
 
     public override bool OnDrag(TouchEventData touchData, PointF localDelta)
     {
-        var transform = Scene.GetTransform(Id);
         var worldTransform = Scene.GetWorldTransform(Id);
         var handleWorldPos = Vector2.Transform(Vector2.Zero, worldTransform);
         var cursorWorldPos = new Vector2(touchData.WorldPoint.X, touchData.WorldPoint.Y);
@@ -89,7 +87,6 @@ public class FeatureNode : Node
 
     private void OnTranslationHandleDragged((TouchEventData touchData, PointF localDelta) e)
     {
-        var transform = Scene.GetTransform(Id);
         var worldTransform = Scene.GetWorldTransform(Id);
         var handleLocalPos = new Vector2(0, -HANDLE_OFFSET); // Handle offset from center
         var handleWorldPos = Vector2.Transform(handleLocalPos, worldTransform);
@@ -109,7 +106,6 @@ public class FeatureNode : Node
     {
         Console.WriteLine($"Rot Dragged at Local: {e.touchData.LocalPoint}, Parent: {e.touchData.ParentPoint}, World: {e.touchData.WorldPoint}");
         
-        var transform = Scene.GetTransform(Id);
         var worldTransform = Scene.GetParentTransform(Id);
         
         var cursor = new Vector2(e.touchData.WorldPoint.X, e.touchData.WorldPoint.Y);
@@ -126,7 +122,7 @@ public class FeatureNode : Node
         var angleRadians = MathF.Atan2(deltaY, deltaX);
         var angleDegrees = angleRadians * (180f / MathF.PI) - 90f;
         
-        transform.Rotation = angleDegrees;
+        Transform.Rotation = angleDegrees;
         
         Scene.InvalidateTransform(Id);
         
