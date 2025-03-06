@@ -109,7 +109,7 @@ namespace Hawaii
                 //}
                 //else
                 //{
-                var parentOffsetMatrix = Matrix3x2.CreateTranslation(parentAnchorOffset);
+                    var parentOffsetMatrix = Matrix3x2.CreateTranslation(parentAnchorOffset);
                     transform = Matrix3x2.CreateTranslation(-originOffset) * localMatrix * parentOffsetMatrix * parentTransform;
                 //}
             }

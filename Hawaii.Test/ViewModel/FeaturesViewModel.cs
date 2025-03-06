@@ -16,14 +16,14 @@ public class FeaturesViewModel : INodeState
         //         Position = new Vector2(100, 100)
         //     }
         // },
-        new Feature
-        {
-            Name = "Feature 2",
-            Transform = new Transform
-            {
-                Position = new Vector2(600, 400)
-            }
-        },
+        //new Feature
+        //{
+        //    Name = "Feature 2",
+        //    Transform = new Transform
+        //    {
+        //        Position = new Vector2(600, 400)
+        //    }
+        //},
         new Feature
         {
             Name = "Feature 3",

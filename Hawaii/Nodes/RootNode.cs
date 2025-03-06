@@ -18,7 +18,7 @@ public class RootNode : Node
         Origin = Origin.Center;
         Size = new SizeF(float.MaxValue, float.MaxValue);
         Renderer = new DefaultRenderer();
-        IgnoreAncestorScale = false;
+        //IgnoreAncestorScale = false;
     }
 
     public override bool OnClicked(TouchEventData touchData)

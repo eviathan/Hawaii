@@ -22,7 +22,6 @@ public class FeatureHandleNode : Node
         Renderer = new NodeRenderer();
         Origin = Origin.Center;
         Size = new SizeF(50, 50);
-        IgnoreAncestorScale = true;
     }
 
     public override bool OnClicked(TouchEventData touchData)

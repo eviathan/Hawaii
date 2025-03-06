@@ -58,8 +58,8 @@ public class SceneRenderer : BindableObject, IDrawable
             canvas.SaveState();
             canvas.ConcatenateTransform(transform);
 
-            if (!node.IgnoreAncestorScale)
-                canvas.Scale(localScale.X, localScale.Y);
+            //if (!node.IgnoreAncestorScale)
+            canvas.Scale(localScale.X, localScale.Y);
 
             // Only apply originOffset for RootNode if needed; child nodes handle it in transform
             if (node == _scene.RootNode)
