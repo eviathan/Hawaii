@@ -11,8 +11,6 @@ public class Node
     
     public INodeState State { get; set; }
     
-    //public bool IgnoreAncestorScale { get; set; }
-    
     public SizeF Size { get; set; }
     
     public Transform Transform { get; set; } = new();

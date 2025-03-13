@@ -28,16 +28,16 @@ namespace Hawaii.Test.SceneBuilders
                     var featureNode = new FeatureNode(_scene, feature);
                     //featureNode.Initialise();
 
-                    var translationHandle = new FeatureHandleNode(_scene);
-                    translationHandle.State = state;
-                    translationHandle.Feature = featureNode;
+                    //var translationHandle = new FeatureHandleNode(_scene);
+                    //translationHandle.State = state;
+                    //translationHandle.Feature = featureNode;
                     //translationHandle.Transform = new Transform
                     //{
                     //    Position = new Vector2(0f, -HANDLE_OFFSET),
                     //};
                     //translationHandle.Clicked += OnTranslationHandleClicked;
                     //translationHandle.Dragged += OnTranslationHandleDragged;
-                    featureNode.AddChild(translationHandle);
+                    //featureNode.AddChild(translationHandle);
 
                     _backgroundImage.AddChild(featureNode);
                 }

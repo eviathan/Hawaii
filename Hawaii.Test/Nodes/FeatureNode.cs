@@ -2,11 +2,12 @@ using System.Numerics;
 using Hawaii.Enums;
 using Hawaii.EventData;
 using Hawaii.Interfaces;
+using Hawaii.Nodes;
 using Hawaii.Test.Models;
 
 namespace Hawaii.Test.Nodes;
 
-public class FeatureNode : Node
+public class FeatureNode : MarkerNode
 {
     public const float HANDLE_OFFSET = 100f;
 
@@ -28,32 +29,33 @@ public class FeatureNode : Node
         Renderer = new NodeRenderer();
     }
 
+    #region Hide
     public override void Initialise()
     {
-        // TODO: Encapsulate this into its own method and call twice or move to featurehandle constructor
-        TranslationHandle = new FeatureHandleNode(Scene);
-        TranslationHandle.State = State;
-        TranslationHandle.Feature = this;
-        //TranslationHandle.Transform = new Transform
-        //{
-        //    Position = new Vector2(0f, -HANDLE_OFFSET),
-        //};
-        //TranslationHandle.Clicked += OnTranslationHandleClicked;
-        //TranslationHandle.Dragged += OnTranslationHandleDragged;
-        AddChild(TranslationHandle);
+        //// TODO: Encapsulate this into its own method and call twice or move to featurehandle constructor
+        //TranslationHandle = new FeatureHandleNode(Scene);
+        //TranslationHandle.State = State;
+        //TranslationHandle.Feature = this;
+        ////TranslationHandle.Transform = new Transform
+        ////{
+        ////    Position = new Vector2(0f, -HANDLE_OFFSET),
+        ////};
+        ////TranslationHandle.Clicked += OnTranslationHandleClicked;
+        ////TranslationHandle.Dragged += OnTranslationHandleDragged;
+        //AddChild(TranslationHandle);
 
-        RotationHandle = new FeatureHandleNode(Scene);
-        RotationHandle.State = State;
-        RotationHandle.Feature = this;
-        RotationHandle.Color = Colors.Aquamarine;
-        //RotationHandle.Transform = new Transform
-        //{
-        //    Position = new Vector2(0f, HANDLE_OFFSET),
-        //};
-        //RotationHandle.Clicked += OnRotationHandleClicked;
-        //RotationHandle.Dragged += OnRotationHandleDragged;
+        //RotationHandle = new FeatureHandleNode(Scene);
+        //RotationHandle.State = State;
+        //RotationHandle.Feature = this;
+        //RotationHandle.Color = Colors.Aquamarine;
+        ////RotationHandle.Transform = new Transform
+        ////{
+        ////    Position = new Vector2(0f, HANDLE_OFFSET),
+        ////};
+        ////RotationHandle.Clicked += OnRotationHandleClicked;
+        ////RotationHandle.Dragged += OnRotationHandleDragged;
 
-        AddChild(RotationHandle);
+        //AddChild(RotationHandle);
     }
 
     //public override bool OnClicked(TouchEventData touchData)
@@ -131,6 +133,7 @@ public class FeatureNode : Node
     //        e.touchData.ParentPoint.Y + HANDLE_OFFSET
     //    );
     //}
+    #endregion
 
     private class NodeRenderer : INodeRenderer
     {
@@ -140,17 +143,6 @@ public class FeatureNode : Node
 
             canvas.FillColor = featureNode.WasClicked ? Colors.Red : Colors.HotPink;
             canvas.FillEllipse(0f, 0f, node.Size.Width, node.Size.Height);
-
-
-            // Draw world bounds for debugging
-            var localBounds = node.GetLocalBounds(); // (0, 0, 100, 100)
-            canvas.StrokeColor = Colors.Blue;
-            canvas.StrokeSize = 2f;
-            canvas.DrawRectangle(localBounds.X, localBounds.Y, localBounds.Width, localBounds.Height);
-
-            canvas.StrokeColor = Colors.Red;
-            canvas.DrawLine(0, 0, 0, -HANDLE_OFFSET); // To TranslationHandle
-            canvas.DrawLine(0, 0, 0, HANDLE_OFFSET);  // To RotationHandle
         }
     }
 }

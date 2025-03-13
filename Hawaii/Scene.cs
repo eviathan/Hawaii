@@ -6,6 +6,8 @@ namespace Hawaii
 {
     public class Scene
     {
+        private readonly SceneCamera _camera;
+
         public Node RootNode { get; }
 
         public Dictionary<Guid, Node> Nodes { get; } = new();
@@ -16,6 +18,8 @@ namespace Hawaii
 
         public Scene(SceneCamera camera)
         {
+            _camera = camera ?? throw new ArgumentNullException(nameof(camera));
+
             RootNode = new RootNode(this, camera);
             AddNode(RootNode);
 
@@ -61,7 +65,6 @@ namespace Hawaii
             TransformChanged?.Invoke(id);
         }
 
-        // TODO: REIMPLEMENT AND SIMPLIFY THIS
         public Matrix3x2 GetParentTransform(Guid nodeId)
         {
             var transform = Matrix3x2.Identity;
@@ -71,7 +74,6 @@ namespace Hawaii
             var originOffset = node.GetOriginOffset();
             var alignmentOffset = node.GetAlignmentOffset();
 
-            // Local transform: scale, rotate, translate (including alignment)
             var localMatrix =
                 Matrix3x2.CreateScale(local.Scale) *
                 Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians()) *
@@ -88,30 +90,9 @@ namespace Hawaii
                 var parentNode = node.Parent;
                 var parentTransform = GetWorldTransform(parentNode.Id);
                 var parentAnchorOffset = parentNode.GetOriginOffset();
+                var parentOffsetMatrix = Matrix3x2.CreateTranslation(parentAnchorOffset);
 
-                //if (node.IgnoreAncestorScale)
-                //{
-                //    var parentWorldPos = Vector2.Transform(Vector2.Zero, parentTransform);
-                //    float parentRotation = (float)Math.Atan2(parentTransform.M21, parentTransform.M11);
-                //    var parentScale = parentTransform.GetScale();
-
-                //    var scaledPosition = (local.Position + alignmentOffset) * parentScale;
-                //    var adjustedLocalMatrix =
-                //        Matrix3x2.CreateScale(local.Scale) *
-                //        Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians()) *
-                //        Matrix3x2.CreateTranslation(scaledPosition);
-
-                //    var positionTransform =
-                //        Matrix3x2.CreateRotation(parentRotation) *
-                //        Matrix3x2.CreateTranslation(parentWorldPos);
-
-                //    transform = Matrix3x2.CreateTranslation(-originOffset) * adjustedLocalMatrix * positionTransform;
-                //}
-                //else
-                //{
-                    var parentOffsetMatrix = Matrix3x2.CreateTranslation(parentAnchorOffset);
-                    transform = Matrix3x2.CreateTranslation(-originOffset) * localMatrix * parentOffsetMatrix * parentTransform;
-                //}
+                transform = Matrix3x2.CreateTranslation(-originOffset) * localMatrix * parentOffsetMatrix * parentTransform;
             }
 
             return transform;
