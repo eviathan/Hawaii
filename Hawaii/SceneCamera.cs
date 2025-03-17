@@ -6,6 +6,8 @@ namespace Hawaii
     {
         private bool _isZoomed;
 
+        private float _zoom;
+        
         public Transform Transform { get; set; } = new Transform();
 
         public SizeF ViewportSize { get; set; }
@@ -43,8 +45,8 @@ namespace Hawaii
 
         public void ToggleZoom()
         {
-            Transform.Scale = _isZoomed ? Vector2.One: new Vector2(2.0f, 2.0f);
-            _isZoomed = !_isZoomed;
+            _zoom = (_zoom + 0.1f) % 4f;
+            Transform.Scale = new Vector2(1f + _zoom, 1f + _zoom);
         }
     }
 }

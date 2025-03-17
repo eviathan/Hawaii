@@ -52,54 +52,93 @@ public class RootNode : Node
         Scene.InvalidateView?.Invoke();
         return true;
     }
-
+    
     private class DefaultRenderer : INodeRenderer
     {
-        private const float CHECKER_SIZE = 25f;
+        private const float CHECKER_SIZE = 50f;
 
         public void Draw(ICanvas canvas, Node node, RectF dirtyRect)
         {
-            if(node is not RootNode rootNode)
+            if (node is not RootNode rootNode)
                 return;
 
-            // Fill the entire infinite plane with a background color
             canvas.Alpha = 0.6f;
             canvas.FillColor = Color.FromArgb("#37424A");
             canvas.FillRectangle(-float.MaxValue / 2, -float.MaxValue / 2, float.MaxValue, float.MaxValue);
 
-            // Get the camera's scale and position from the scene
-            var tileSize = rootNode.Camera.Transform.Scale * CHECKER_SIZE;
-
-            // Convert viewport corners to world space
             var topLeftWorld = rootNode.Camera.ScreenToWorld(new Vector2(dirtyRect.Left, dirtyRect.Top));
             var bottomRightWorld = rootNode.Camera.ScreenToWorld(new Vector2(dirtyRect.Right, dirtyRect.Bottom));
 
-            // Transform world coordinates to local space of the RootNode
-            var inverseTransform = Matrix3x2.Invert(node.Scene.GetWorldTransform(node.Id), out var inv)
-                ? inv : Matrix3x2.Identity;
+            var inverseTransform = Matrix3x2.Invert(node.Scene.GetWorldTransform(node.Id), out var inv) ? inv : Matrix3x2.Identity;
             var topLeftLocal = Vector2.Transform(topLeftWorld, inverseTransform);
             var bottomRightLocal = Vector2.Transform(bottomRightWorld, inverseTransform);
 
-            // Calculate tile grid bounds in local space
-            int startX = (int)Math.Floor(topLeftLocal.X / tileSize.X);
-            int endX = (int)Math.Ceiling(bottomRightLocal.X / tileSize.X);
-            int startY = (int)Math.Floor(topLeftLocal.Y / tileSize.Y);
-            int endY = (int)Math.Ceiling(bottomRightLocal.Y / tileSize.Y);
+            int startX = (int)Math.Floor(topLeftLocal.X / CHECKER_SIZE);
+            int endX = (int)Math.Ceiling(bottomRightLocal.X / CHECKER_SIZE);
+            int startY = (int)Math.Floor(topLeftLocal.Y / CHECKER_SIZE);
+            int endY = (int)Math.Ceiling(bottomRightLocal.Y / CHECKER_SIZE);
 
-            // Draw checkerboard across the visible area
             for (int x = startX; x < endX; x++)
             {
                 for (int y = startY; y < endY; y++)
                 {
                     bool isWhite = (x + y) % 2 == 0;
                     canvas.FillColor = isWhite ? Colors.White : Colors.LightGray;
-                    float localX = x * tileSize.X;
-                    float localY = y * tileSize.Y;
-                    canvas.FillRectangle(localX, localY, tileSize.X, tileSize.Y);
+                    float localX = x * CHECKER_SIZE;
+                    float localY = y * CHECKER_SIZE;
+                    canvas.FillRectangle(localX, localY, CHECKER_SIZE, CHECKER_SIZE);
                 }
             }
         }
     }
+
+    // private class DefaultRenderer : INodeRenderer
+    // {
+    //     private const float CHECKER_SIZE = 25f;
+    //
+    //     public void Draw(ICanvas canvas, Node node, RectF dirtyRect)
+    //     {
+    //         if(node is not RootNode rootNode)
+    //             return;
+    //
+    //         // Fill the entire infinite plane with a background color
+    //         canvas.Alpha = 0.6f;
+    //         canvas.FillColor = Color.FromArgb("#37424A");
+    //         canvas.FillRectangle(-float.MaxValue / 2, -float.MaxValue / 2, float.MaxValue, float.MaxValue);
+    //
+    //         // Get the camera's scale and position from the scene
+    //         var tileSize = rootNode.Camera.Transform.Scale * CHECKER_SIZE;
+    //
+    //         // Convert viewport corners to world space
+    //         var topLeftWorld = rootNode.Camera.ScreenToWorld(new Vector2(dirtyRect.Left, dirtyRect.Top));
+    //         var bottomRightWorld = rootNode.Camera.ScreenToWorld(new Vector2(dirtyRect.Right, dirtyRect.Bottom));
+    //
+    //         // Transform world coordinates to local space of the RootNode
+    //         var inverseTransform = Matrix3x2.Invert(node.Scene.GetWorldTransform(node.Id), out var inv)
+    //             ? inv : Matrix3x2.Identity;
+    //         var topLeftLocal = Vector2.Transform(topLeftWorld, inverseTransform);
+    //         var bottomRightLocal = Vector2.Transform(bottomRightWorld, inverseTransform);
+    //
+    //         // Calculate tile grid bounds in local space
+    //         int startX = (int)Math.Floor(topLeftLocal.X / tileSize.X);
+    //         int endX = (int)Math.Ceiling(bottomRightLocal.X / tileSize.X);
+    //         int startY = (int)Math.Floor(topLeftLocal.Y / tileSize.Y);
+    //         int endY = (int)Math.Ceiling(bottomRightLocal.Y / tileSize.Y);
+    //
+    //         // Draw checkerboard across the visible area
+    //         for (int x = startX; x < endX; x++)
+    //         {
+    //             for (int y = startY; y < endY; y++)
+    //             {
+    //                 bool isWhite = (x + y) % 2 == 0;
+    //                 canvas.FillColor = isWhite ? Colors.White : Colors.LightGray;
+    //                 float localX = x * tileSize.X;
+    //                 float localY = y * tileSize.Y;
+    //                 canvas.FillRectangle(localX, localY, tileSize.X, tileSize.Y);
+    //             }
+    //         }
+    //     }
+    // }
 
     public override Vector2 GetOriginOffset()
     {

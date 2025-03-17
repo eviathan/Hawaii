@@ -142,7 +142,7 @@ public class FeatureNode : MarkerNode
             if (node is not FeatureNode featureNode) return;
 
             canvas.FillColor = featureNode.WasClicked ? Colors.Red : Colors.HotPink;
-            canvas.FillEllipse(-node.Size.Width / 2, -node.Size.Height / 2, node.Size.Width, node.Size.Height);
+            canvas.FillEllipse(node.Size.Width / 2, node.Size.Height / 2, node.Size.Width, node.Size.Height);
         }
     }
 }
