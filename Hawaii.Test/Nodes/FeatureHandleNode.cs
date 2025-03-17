@@ -2,10 +2,11 @@ using System.Numerics;
 using Hawaii.Enums;
 using Hawaii.EventData;
 using Hawaii.Interfaces;
+using Hawaii.Nodes;
 
 namespace Hawaii.Test.Nodes;
 
-public class FeatureHandleNode : Node
+public class FeatureHandleNode : MarkerNode
 {
     public FeatureNode Feature { get; set; }
 

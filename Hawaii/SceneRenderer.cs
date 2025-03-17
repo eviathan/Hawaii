@@ -51,23 +51,17 @@ public class SceneRenderer : BindableObject, IDrawable
         foreach (var node in orderedNodes)
         {
             var transform = _scene.GetParentTransform(node.Id);
-            var localScale = node.Transform.Scale;
 
             canvas.SaveState();
             canvas.ConcatenateTransform(transform);
-
-            // if (node is MarkerNode)
-            // {
-            //     var inheritedScale = _camera.Transform.Scale * transform.GetScale();
-            //     canvas.Scale(1f / inheritedScale.X, 1f / inheritedScale.Y);
-            // }
             
             if (node is MarkerNode)
             {
                 var inheritedScale = _camera.Transform.Scale * transform.GetScale();
                 canvas.Scale(1f / inheritedScale.X, 1f / inheritedScale.Y);
+                
                 // Offset to correct drift: scale the origin offset by the inverse scale
-                var originOffset = node.GetOriginOffset(); // (50, 50) for Center
+                var originOffset = node.GetOriginOffset(); 
                 canvas.Translate(originOffset.X * (inheritedScale.X - 1), originOffset.Y * (inheritedScale.Y - 1));
             }
 

@@ -26,7 +26,7 @@ namespace Hawaii.Test.SceneBuilders
                 foreach (var feature in viewModel.Features)
                 {
                     var featureNode = new FeatureNode(_scene, feature);
-                    //featureNode.Initialise();
+                    featureNode.Initialise();
 
                     //var translationHandle = new FeatureHandleNode(_scene);
                     //translationHandle.State = state;

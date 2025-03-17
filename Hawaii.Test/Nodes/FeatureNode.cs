@@ -33,29 +33,29 @@ public class FeatureNode : MarkerNode
     public override void Initialise()
     {
         //// TODO: Encapsulate this into its own method and call twice or move to featurehandle constructor
-        //TranslationHandle = new FeatureHandleNode(Scene);
-        //TranslationHandle.State = State;
-        //TranslationHandle.Feature = this;
-        ////TranslationHandle.Transform = new Transform
-        ////{
-        ////    Position = new Vector2(0f, -HANDLE_OFFSET),
-        ////};
-        ////TranslationHandle.Clicked += OnTranslationHandleClicked;
-        ////TranslationHandle.Dragged += OnTranslationHandleDragged;
-        //AddChild(TranslationHandle);
+        TranslationHandle = new FeatureHandleNode(Scene);
+        TranslationHandle.State = State;
+        TranslationHandle.Feature = this;
+        TranslationHandle.Transform = new Transform
+        {
+            Position = new Vector2(0f, -HANDLE_OFFSET),
+        };
+        //TranslationHandle.Clicked += OnTranslationHandleClicked;
+        //TranslationHandle.Dragged += OnTranslationHandleDragged;
+        AddChild(TranslationHandle);
 
-        //RotationHandle = new FeatureHandleNode(Scene);
-        //RotationHandle.State = State;
-        //RotationHandle.Feature = this;
-        //RotationHandle.Color = Colors.Aquamarine;
-        ////RotationHandle.Transform = new Transform
-        ////{
-        ////    Position = new Vector2(0f, HANDLE_OFFSET),
-        ////};
-        ////RotationHandle.Clicked += OnRotationHandleClicked;
-        ////RotationHandle.Dragged += OnRotationHandleDragged;
+        RotationHandle = new FeatureHandleNode(Scene);
+        RotationHandle.State = State;
+        RotationHandle.Feature = this;
+        RotationHandle.Color = Colors.Aquamarine;
+        RotationHandle.Transform = new Transform
+        {
+            Position = new Vector2(0f, HANDLE_OFFSET),
+        };
+        //RotationHandle.Clicked += OnRotationHandleClicked;
+        //RotationHandle.Dragged += OnRotationHandleDragged;
 
-        //AddChild(RotationHandle);
+        AddChild(RotationHandle);
     }
 
     //public override bool OnClicked(TouchEventData touchData)

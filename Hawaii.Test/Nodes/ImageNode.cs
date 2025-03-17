@@ -11,7 +11,7 @@ public class ImageNode : Node
     {
         Size = new SizeF(1000, 1000);
         Origin = Origin.TopLeft;
-        Alignment = Alignment.Center;
+        Alignment = Alignment.None;
         Renderer = new NodeRenderer();
     }
 
