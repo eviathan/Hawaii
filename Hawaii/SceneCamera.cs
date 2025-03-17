@@ -42,11 +42,22 @@ namespace Hawaii
                    Matrix3x2.CreateScale(Transform.Scale) *
                    Matrix3x2.CreateTranslation(new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2));
         }
-
-        public void ToggleZoom()
+        
+        public void ToggleZoom(Vector2 screenFocalPoint)
         {
+            // Step 1: Calculate the world-space point under the click before zooming
+            Vector2 worldFocal = ScreenToWorld(screenFocalPoint);
+
+            // Step 2: Update the zoom level (increment by 0.1, wrap at 4)
             _zoom = (_zoom + 0.1f) % 4f;
-            Transform.Scale = new Vector2(1f + _zoom, 1f + _zoom);
+            Transform.Scale = new Vector2(1f + _zoom, 1f + _zoom); // Uniform scaling
+
+            // Step 3: Adjust Position to keep the focal point stationary
+            // - After scaling, the world point should map back to the same screen point
+            // - New position = worldFocal - (screen offset from center / new scale)
+            Vector2 viewportCenter = new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
+            Vector2 screenOffset = screenFocalPoint - viewportCenter;
+            Transform.Position = worldFocal - screenOffset / Transform.Scale;
         }
     }
 }
