@@ -21,27 +21,27 @@ namespace Hawaii.Test.SceneBuilders
         {
             _scene.RootNode.AddChild(_backgroundImage);
 
-            // if (state is FeaturesViewModel viewModel)
-            // {
-            //     foreach (var feature in viewModel.Features)
-            //     {
-            //         var featureNode = new FeatureNode(_scene, feature);
-            //         //featureNode.Initialise();
-            //
-            //         //var translationHandle = new FeatureHandleNode(_scene);
-            //         //translationHandle.State = state;
-            //         //translationHandle.Feature = featureNode;
-            //         //translationHandle.Transform = new Transform
-            //         //{
-            //         //    Position = new Vector2(0f, -HANDLE_OFFSET),
-            //         //};
-            //         //translationHandle.Clicked += OnTranslationHandleClicked;
-            //         //translationHandle.Dragged += OnTranslationHandleDragged;
-            //         //featureNode.AddChild(translationHandle);
-            //
-            //         _backgroundImage.AddChild(featureNode);
-            //     }
-            // }
+            if (state is FeaturesViewModel viewModel)
+            {
+                foreach (var feature in viewModel.Features)
+                {
+                    var featureNode = new FeatureNode(_scene, feature);
+                    //featureNode.Initialise();
+
+                    //var translationHandle = new FeatureHandleNode(_scene);
+                    //translationHandle.State = state;
+                    //translationHandle.Feature = featureNode;
+                    //translationHandle.Transform = new Transform
+                    //{
+                    //    Position = new Vector2(0f, -HANDLE_OFFSET),
+                    //};
+                    //translationHandle.Clicked += OnTranslationHandleClicked;
+                    //translationHandle.Dragged += OnTranslationHandleDragged;
+                    //featureNode.AddChild(translationHandle);
+
+                    _backgroundImage.AddChild(featureNode);
+                }
+            }
         }
     }
 }
