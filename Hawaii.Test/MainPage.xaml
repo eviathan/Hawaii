@@ -6,7 +6,6 @@
              x:Class="Hawaii.Test.MainPage">
     <Grid BackgroundColor="DarkSlateGray" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
         <global:SceneGraphicsView
-            BackgroundColor="Magenta"
             x:TypeArguments="sceneBuilders:FeatureSceneBuilder"
             State="{Binding .}"
         />
