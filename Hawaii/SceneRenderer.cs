@@ -44,23 +44,23 @@ public class SceneRenderer : BindableObject, IDrawable
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
-
         var orderedNodes = _scene.GetNodesInDrawOrder();
+
         foreach (var node in orderedNodes)
         {
             var transform = _scene.GetParentTransform(node.Id);
 
             canvas.SaveState();
             canvas.ConcatenateTransform(transform);
-        canvas.SaveState();
-        _camera.ApplyTransform(canvas, dirtyRect);
+
+            canvas.SaveState();
+            _camera.ApplyTransform(canvas, dirtyRect);
             
             if (node is MarkerNode)
             {
                 var inheritedScale = _camera.Transform.Scale * transform.GetScale();
                 canvas.Scale(1f / inheritedScale.X, 1f / inheritedScale.Y);
                 
-                // Offset to correct drift: scale the origin offset by the inverse scale
                 var originOffset = node.GetOriginOffset(); 
                 canvas.Translate(originOffset.X * (inheritedScale.X - 1), originOffset.Y * (inheritedScale.Y - 1));
             }
@@ -71,13 +71,11 @@ public class SceneRenderer : BindableObject, IDrawable
                 canvas.Translate(-originOffset.X, -originOffset.Y);
             }
 
-            // Render Node
             node.Renderer?.Draw(canvas, node, dirtyRect);
 
             canvas.RestoreState();
-        canvas.RestoreState();
+            canvas.RestoreState();
         }
-
     }
 
     private PointF ScreenToWorld(PointF screenPoint)

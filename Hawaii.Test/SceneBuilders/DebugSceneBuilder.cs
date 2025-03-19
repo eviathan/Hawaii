@@ -26,6 +26,7 @@ namespace Hawaii.Test.SceneBuilders
                 foreach (var feature in viewModel.Features)
                 {
                     var featureNode = new FeatureNode(_scene, feature);
+                    _backgroundImage.AddChild(featureNode);
                     featureNode.Initialise();
 
                     //var translationHandle = new FeatureHandleNode(_scene);
@@ -39,7 +40,6 @@ namespace Hawaii.Test.SceneBuilders
                     //translationHandle.Dragged += OnTranslationHandleDragged;
                     //featureNode.AddChild(translationHandle);
 
-                    _backgroundImage.AddChild(featureNode);
                 }
             }
         }

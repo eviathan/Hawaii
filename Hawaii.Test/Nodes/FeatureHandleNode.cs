@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using Hawaii.Enums;
 using Hawaii.EventData;
@@ -43,6 +44,8 @@ public class FeatureHandleNode : MarkerNode
         {
             if (node is not FeatureHandleNode featureHandleNode)
                 return;
+
+            Debug.WriteLine($"Drawing {featureHandleNode}: Pos {node.Transform.Position}, World Pos {Vector2.Transform(Vector2.Zero, node.Scene.GetWorldTransform(node.Id))}");
 
             canvas.FillColor = featureHandleNode.Color;
             canvas.FillEllipse(0f, 0f, node.Size.Width, node.Size.Height);
