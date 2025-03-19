@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using Hawaii.Enums;
 using Hawaii.EventData;
@@ -88,13 +89,37 @@ public class FeatureNode : MarkerNode
 
     private void OnTranslationHandleDragged((TouchEventData touchData, PointF localDelta) e)
     {
-        var worldTransform = Scene.GetWorldTransform(Id);
-        var handleLocalPos = new Vector2(0, -HANDLE_OFFSET); // Handle offset from center
-        var handleWorldPos = Vector2.Transform(handleLocalPos, worldTransform);
-        var cursorWorldPos = new Vector2(e.touchData.WorldPoint.X, e.touchData.WorldPoint.Y);
-        var delta = cursorWorldPos - handleWorldPos; // Move center so handle hits cursor
-        Translate(delta, Space.Local);
+        var parentSpaceDelta = new Vector2(e.localDelta.X, e.localDelta.Y);
+        var rotationRadians = Transform.Rotation * MathF.PI / 180f;
+        var rotationMatrix = Matrix3x2.CreateRotation(rotationRadians);
+        var localSpaceDelta = Vector2.Transform(parentSpaceDelta, rotationMatrix);
+
+        Console.WriteLine($"Rotation: {Transform.Rotation}°");
+        Console.WriteLine($"ParentSpaceDelta: {parentSpaceDelta}");
+        Console.WriteLine($"LocalSpaceDelta: {localSpaceDelta}");
+        Console.WriteLine($"Position Before: {Transform.Position}");
+        Translate(localSpaceDelta, Space.Local);
+        Console.WriteLine($"Position After: {Transform.Position}");
     }
+
+    //private void OnTranslationHandleDragged((TouchEventData touchData, PointF localDelta) e)
+    //{
+    //    // Use the pre-computed localDelta from EventDispatcher (in FeatureNode's parent space)
+    //    var delta = new Vector2(e.localDelta.X, e.localDelta.Y);
+
+    //    // Apply directly in Space.Local (FeatureNode's parent space)
+    //    Translate(delta, Space.Local);
+    //}
+
+    //private void OnTranslationHandleDragged((TouchEventData touchData, PointF localDelta) e)
+    //{
+    //    var worldTransform = Scene.GetWorldTransform(Id);
+    //    var handleLocalPos = new Vector2(0, -HANDLE_OFFSET);
+    //    var handleWorldPos = Vector2.Transform(handleLocalPos, worldTransform);
+    //    var cursorWorldPos = new Vector2(e.touchData.WorldPoint.X, e.touchData.WorldPoint.Y);
+    //    var delta = cursorWorldPos - handleWorldPos;
+    //    Translate(delta, Space.Local);
+    //}
 
     private void OnRotationHandleClicked(TouchEventData touchData)
     {
