@@ -6,7 +6,7 @@ namespace Hawaii
 {
     public class Scene
     {
-        private readonly SceneCamera _camera;
+        public readonly SceneCamera Camera;
 
         public Node RootNode { get; }
 
@@ -18,7 +18,7 @@ namespace Hawaii
 
         public Scene(SceneCamera camera)
         {
-            _camera = camera ?? throw new ArgumentNullException(nameof(camera));
+            Camera = camera ?? throw new ArgumentNullException(nameof(camera));
 
             RootNode = new RootNode(this, camera);
             AddNode(RootNode);
