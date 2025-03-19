@@ -28,20 +28,37 @@ public class FeatureNode : MarkerNode
         //IgnoreAncestorScale = true;
 
         Renderer = new NodeRenderer();
+        Scene.Camera.DidZoom += Camera_DidZoom;
+    }
+
+    private void Camera_DidZoom()
+    {
+        var parentOffset = Parent?.GetAlignmentOffset() ?? Vector2.Zero;
+        var offset = HANDLE_OFFSET;// / Scene.Camera.Zoom;
+
+        TranslationHandle.Transform = new Transform
+        {
+            Position = Scene.Camera.ScreenDistanceToWorld(new Vector2(0f, -offset)) - parentOffset,
+        };
+
+        RotationHandle.Transform = new Transform
+        {
+            Position = Scene.Camera.ScreenDistanceToWorld(new Vector2(0f, offset)) - parentOffset,
+        };
     }
 
     #region Hide
     public override void Initialise()
     {
         var parentOffset = Parent?.GetAlignmentOffset() ?? Vector2.Zero;
+        var offset = HANDLE_OFFSET;// / Scene.Camera.Zoom;
 
-        //// TODO: Encapsulate this into its own method and call twice or move to featurehandle constructor
         TranslationHandle = new FeatureHandleNode(Scene);
         TranslationHandle.State = State;
         TranslationHandle.Feature = this;
         TranslationHandle.Transform = new Transform
         {
-            Position = new Vector2(0f, -HANDLE_OFFSET) - parentOffset,
+            Position = Scene.Camera.ScreenDistanceToWorld(new Vector2(0f, -offset)) - parentOffset,
         };
         TranslationHandle.Clicked += OnTranslationHandleClicked;
         TranslationHandle.Dragged += OnTranslationHandleDragged;
@@ -53,23 +70,12 @@ public class FeatureNode : MarkerNode
         RotationHandle.Color = Colors.Aquamarine;
         RotationHandle.Transform = new Transform
         {
-            Position = new Vector2(0f, HANDLE_OFFSET) - parentOffset,
+            Position = Scene.Camera.ScreenDistanceToWorld(new Vector2(0f, offset)) - parentOffset,
         };
         RotationHandle.Clicked += OnRotationHandleClicked;
         RotationHandle.Dragged += OnRotationHandleDragged;
 
         AddChild(RotationHandle);
-
-        Debug.WriteLine($"ImageNode World Pos: {Vector2.Transform(Vector2.Zero, Scene.GetWorldTransform(Parent.Id))}");
-        Debug.WriteLine($"FeatureNode World Pos: {Vector2.Transform(Vector2.Zero, Scene.GetWorldTransform(Id))}");
-        Debug.WriteLine($"TranslationHandle World Pos: {Vector2.Transform(Vector2.Zero, Scene.GetWorldTransform(TranslationHandle.Id))}");
-        Debug.WriteLine($"RotationHandle World Pos: {Vector2.Transform(Vector2.Zero, Scene.GetWorldTransform(RotationHandle.Id))}");
-        Debug.WriteLine($"ImageNode Alignment Offset: {Parent.GetAlignmentOffset()}");
-        Debug.WriteLine($"TranslationHandle Local Pos: {TranslationHandle.Transform.Position}");
-        Debug.WriteLine($"RotationHandle Local Pos: {RotationHandle.Transform.Position}");
-        Debug.WriteLine($"FeatureNode Screen Pos: {Scene.Camera.WorldToScreen(Vector2.Transform(Vector2.Zero, Scene.GetWorldTransform(Id)))}");
-        Debug.WriteLine($"TranslationHandle Screen Pos: {Scene.Camera.WorldToScreen(Vector2.Transform(Vector2.Zero, Scene.GetWorldTransform(TranslationHandle.Id)))}");
-        Debug.WriteLine($"RotationHandle Screen Pos: {Scene.Camera.WorldToScreen(Vector2.Transform(Vector2.Zero, Scene.GetWorldTransform(RotationHandle.Id)))}");
     }
 
     public override bool OnClicked(TouchEventData touchData)

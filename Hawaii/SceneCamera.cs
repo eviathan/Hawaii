@@ -4,13 +4,13 @@ namespace Hawaii
 {
     public class SceneCamera
     {
-        private bool _isZoomed;
-
-        private float _zoom;
+        public float Zoom { get; set; } = 1.0f;
         
         public Transform Transform { get; set; } = new Transform();
 
         public SizeF ViewportSize { get; set; }
+
+        public event Action DidZoom;
 
         public Vector2 WorldToScreen(Vector2 worldPoint)
         {
@@ -36,6 +36,12 @@ namespace Hawaii
             return worldPoint;
         }
 
+        public Vector2 ScreenDistanceToWorld(Vector2 screenDistance)
+        {
+            // Convert screen-space distance to world-space distance by dividing by camera scale
+            return new Vector2(screenDistance.X / Transform.Scale.X, screenDistance.Y / Transform.Scale.Y);
+        }
+
         public Matrix3x2 GetViewMatrix()
         {
             return Matrix3x2.CreateTranslation(-Transform.Position) *
@@ -47,12 +53,14 @@ namespace Hawaii
         {
             var worldFocal = ScreenToWorld(screenFocalPoint);
 
-            _zoom = (_zoom + 1f) % 4f;
-            Transform.Scale = new Vector2(1f + _zoom, 1f + _zoom);
+            Zoom = (Zoom + 1f) % 4f;
+            Transform.Scale = new Vector2(1f + Zoom, 1f + Zoom);
 
             var viewportCenter = new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
             var screenOffset = screenFocalPoint - viewportCenter;
             Transform.Position = worldFocal - screenOffset / Transform.Scale;
+
+            DidZoom?.Invoke();
         }
     }
 }
