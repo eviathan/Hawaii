@@ -44,8 +44,6 @@ public class SceneRenderer : BindableObject, IDrawable
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
-        canvas.SaveState();
-        _camera.ApplyTransform(canvas, dirtyRect);
 
         var orderedNodes = _scene.GetNodesInDrawOrder();
         foreach (var node in orderedNodes)
@@ -54,6 +52,8 @@ public class SceneRenderer : BindableObject, IDrawable
 
             canvas.SaveState();
             canvas.ConcatenateTransform(transform);
+        canvas.SaveState();
+        _camera.ApplyTransform(canvas, dirtyRect);
             
             if (node is MarkerNode)
             {
@@ -75,9 +75,9 @@ public class SceneRenderer : BindableObject, IDrawable
             node.Renderer?.Draw(canvas, node, dirtyRect);
 
             canvas.RestoreState();
+        canvas.RestoreState();
         }
 
-        canvas.RestoreState();
     }
 
     private PointF ScreenToWorld(PointF screenPoint)

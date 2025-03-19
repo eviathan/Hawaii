@@ -14,11 +14,11 @@ namespace Hawaii
 
         public Vector2 WorldToScreen(Vector2 worldPoint)
         {
-            var relative = worldPoint - Transform.Position;
-            var scaled = relative * Transform.Scale;
-            var screen = scaled + new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
+            var relativePoint = worldPoint - Transform.Position;
+            var scaledPoint = relativePoint * Transform.Scale;
+            var screenPoint = scaledPoint + new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
 
-            return screen;
+            return screenPoint;
         }
 
         public void ApplyTransform(ICanvas canvas, RectF dirtyRect)
@@ -29,11 +29,11 @@ namespace Hawaii
 
         public Vector2 ScreenToWorld(Vector2 screenPoint)
         {
-            var centered = screenPoint - new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
-            var unscaled = centered / Transform.Scale;
-            var world = unscaled + Transform.Position;
+            var centeredPoint = screenPoint - new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
+            var unscaledPoint = centeredPoint / Transform.Scale;
+            var worldPoint = unscaledPoint + Transform.Position;
 
-            return world;
+            return worldPoint;
         }
 
         public Matrix3x2 GetViewMatrix()
@@ -45,18 +45,13 @@ namespace Hawaii
         
         public void ToggleZoom(Vector2 screenFocalPoint)
         {
-            // Step 1: Calculate the world-space point under the click before zooming
-            Vector2 worldFocal = ScreenToWorld(screenFocalPoint);
+            var worldFocal = ScreenToWorld(screenFocalPoint);
 
-            // Step 2: Update the zoom level (increment by 0.1, wrap at 4)
-            _zoom = (_zoom + 0.1f) % 4f;
-            Transform.Scale = new Vector2(1f + _zoom, 1f + _zoom); // Uniform scaling
+            _zoom = (_zoom + 1f) % 4f;
+            Transform.Scale = new Vector2(1f + _zoom, 1f + _zoom);
 
-            // Step 3: Adjust Position to keep the focal point stationary
-            // - After scaling, the world point should map back to the same screen point
-            // - New position = worldFocal - (screen offset from center / new scale)
-            Vector2 viewportCenter = new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
-            Vector2 screenOffset = screenFocalPoint - viewportCenter;
+            var viewportCenter = new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
+            var screenOffset = screenFocalPoint - viewportCenter;
             Transform.Position = worldFocal - screenOffset / Transform.Scale;
         }
     }
