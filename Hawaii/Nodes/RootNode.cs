@@ -16,43 +16,43 @@ public class RootNode : Node
         Camera = camera ?? throw new ArgumentNullException(nameof(camera));
         Size = new SizeF(float.MaxValue, float.MaxValue);
         Renderer = new DefaultRenderer();
-        // Origin = Origin.Center;
-        // Alignment = Alignment.Center;
+        Origin = Origin.Center;
+        Alignment = Alignment.Center;
     }
 
-    // public override bool OnClicked(TouchEventData touchData)
-    // {
-    //     var now = DateTime.UtcNow;
-    //
-    //     if (_lastClicked.HasValue)
-    //     {
-    //         var elapsed = (now - _lastClicked.Value).TotalMilliseconds;
-    //         
-    //         if (elapsed < 500)
-    //         {
-    //             var screenFocalPoint = Camera.WorldToScreen(new Vector2(touchData.WorldPoint.X, touchData.WorldPoint.Y));
-    //             Camera.ToggleZoom(screenFocalPoint);
-    //             _lastClicked = null;
-    //             Scene.InvalidateView?.Invoke();
-    //             return true;
-    //         }
-    //         else if (elapsed > 1000)
-    //         {
-    //             _lastClicked = null;
-    //         }
-    //     }
-    //
-    //     _lastClicked = now;
-    //     return false;
-    // }
-    //
-    // public override bool OnDrag(TouchEventData touchData, PointF localDelta)
-    // {
-    //     var delta = new Vector2(localDelta.X, localDelta.Y) / Camera.Transform.Scale;
-    //     Camera.Transform.Position -= delta;
-    //     Scene.InvalidateView?.Invoke();
-    //     return true;
-    // }
+    public override bool OnClicked(TouchEventData touchData)
+    {
+        var now = DateTime.UtcNow;
+    
+        if (_lastClicked.HasValue)
+        {
+            var elapsed = (now - _lastClicked.Value).TotalMilliseconds;
+            
+            if (elapsed < 500)
+            {
+                var screenFocalPoint = Camera.WorldToScreen(new Vector2(touchData.WorldPoint.X, touchData.WorldPoint.Y));
+                Camera.ToggleZoom(screenFocalPoint);
+                _lastClicked = null;
+                Scene.InvalidateView?.Invoke();
+                return true;
+            }
+            else if (elapsed > 1000)
+            {
+                _lastClicked = null;
+            }
+        }
+    
+        _lastClicked = now;
+        return false;
+    }
+    
+    public override bool OnDrag(TouchEventData touchData, PointF localDelta)
+    {
+        var delta = new Vector2(localDelta.X, localDelta.Y) / Camera.Transform.Scale;
+        Camera.Transform.Position -= delta;
+        Scene.InvalidateView?.Invoke();
+        return true;
+    }
     
     private class DefaultRenderer : INodeRenderer
     {

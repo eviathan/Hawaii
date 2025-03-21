@@ -12,16 +12,6 @@ namespace Hawaii
         public SizeF ViewportSize { get; set; }
 
         public event Action DidZoom;
-        
-        public SceneCamera()
-        {
-            Zoom = 1.0f;
-            Transform = new Transform
-            {
-                Position = new Vector2(0.0f, 240.0f),
-                Scale = Vector2.One
-            };
-        }
 
         public Vector2 WorldToScreen(Vector2 worldPoint)
         {
@@ -36,20 +26,20 @@ namespace Hawaii
         {
             ViewportSize = new SizeF(dirtyRect.Width, dirtyRect.Height);
             Debug.WriteLine($"ViewportSize: {ViewportSize}, dirtyRect: {dirtyRect}, Transform.Position: {Transform.Position}");
+
+            // Matrix3x2.Invert(GetViewMatrix(), out var viewMatrix);
+            // canvas.ConcatenateTransform(viewMatrix);
             // canvas.ConcatenateTransform(GetViewMatrix());
-            canvas.Translate(dirtyRect.Width / 2, dirtyRect.Height / 2);
+            
+            canvas.Scale(Transform.Scale.X, Transform.Scale.Y);
+            canvas.Translate(dirtyRect.Width / 2  - Transform.Position.X, dirtyRect.Height / 2 - Transform.Position.Y);
         }
         
         public Matrix3x2 GetViewMatrix()
         {
             var center = new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
-            var expectedCenter = new Vector2(300, 468);
-            var observedOffset = new Vector2(60, 40);
-            var correction = expectedCenter - observedOffset;
-            
-            return Matrix3x2.CreateTranslation(-Transform.Position)
-                   * Matrix3x2.CreateScale(Transform.Scale)
-                   * Matrix3x2.CreateTranslation(center + correction);
+            return Matrix3x2.CreateScale(Transform.Scale) // Apply zoom first
+                   * Matrix3x2.CreateTranslation(center + Transform.Position); // Then center + pan
         }
 
         public Vector2 ScreenToWorld(Vector2 screenPoint)
