@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Numerics;
 using Hawaii.Extensions;
 using Hawaii.Interfaces;
@@ -41,49 +42,43 @@ public class SceneRenderer : BindableObject, IDrawable
         
         _scene.InvalidateView = () => GraphicsView?.Invalidate();
     }
-
+    
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
-        var orderedNodes = _scene.GetNodesInDrawOrder();
+        // canvas.FillColor = Colors.Blue;
+        // canvas.FillRectangle(dirtyRect.Width / 2, dirtyRect.Height / 2, 25, 25); // (300, 468)
+        //
+        // canvas.FillColor = Colors.White;
+        // canvas.FillCircle(400, 468, 10); // Test position
 
-        foreach (var node in orderedNodes)
+        canvas.SaveState();
+        _camera.ApplyTransform(canvas, dirtyRect);
+
+        canvas.FillColor = Colors.Green;
+        canvas.FillCircle(0, 0, 15); // Where is this?
+
+        foreach (var node in _scene.GetNodesInDrawOrder())
         {
-            var transform = _scene.GetParentTransform(node.Id);
-
-            canvas.SaveState();
-            canvas.ConcatenateTransform(transform);
-
-            canvas.SaveState();
-            _camera.ApplyTransform(canvas, dirtyRect);
+            Matrix3x2 nodeWorld = _scene.GetWorldTransform(node.Id);
+            Debug.WriteLine($"Node {node.Id} World: {nodeWorld}");
             
-            if (node is MarkerNode)
-            {
-                var inheritedScale = _camera.Transform.Scale * transform.GetScale();
-                canvas.Scale(1f / inheritedScale.X, 1f / inheritedScale.Y);
-                
-                var originOffset = node.GetOriginOffset(); 
-                canvas.Translate(originOffset.X * (inheritedScale.X - 1), originOffset.Y * (inheritedScale.Y - 1));
-            }
-
-            if (node == _scene.RootNode)
-            {
-                var originOffset = node.GetOriginOffset();
-                canvas.Translate(-originOffset.X, -originOffset.Y);
-            }
-
+            canvas.SaveState();
+            canvas.ConcatenateTransform(nodeWorld);
+            
+            canvas.FillColor = Colors.Red;
+            canvas.FillCircle(0, 0, 10); // (60, 40)
+            
             node.Renderer?.Draw(canvas, node, dirtyRect);
-
-            canvas.RestoreState();
+            
             canvas.RestoreState();
         }
+        canvas.RestoreState();
     }
 
     private PointF ScreenToWorld(PointF screenPoint)
     {
-        return new PointF(
-            _camera.ScreenToWorld(new Vector2(screenPoint.X, screenPoint.Y)).X,
-            _camera.ScreenToWorld(new Vector2(screenPoint.X, screenPoint.Y)).Y
-        );
+        var worldPoint = _camera.ScreenToWorld(new Vector2(screenPoint.X, screenPoint.Y));
+        return new PointF(worldPoint.X, worldPoint.Y);
     }
 
     #region Event Handling

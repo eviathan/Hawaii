@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
 
 namespace Hawaii
 {
@@ -6,11 +7,21 @@ namespace Hawaii
     {
         public float Zoom { get; set; } = 1.0f;
         
-        public Transform Transform { get; set; } = new Transform();
+        public Transform Transform { get; set; } = new();
 
         public SizeF ViewportSize { get; set; }
 
         public event Action DidZoom;
+        
+        public SceneCamera()
+        {
+            Zoom = 1.0f;
+            Transform = new Transform
+            {
+                Position = new Vector2(0.0f, 240.0f),
+                Scale = Vector2.One
+            };
+        }
 
         public Vector2 WorldToScreen(Vector2 worldPoint)
         {
@@ -24,7 +35,21 @@ namespace Hawaii
         public void ApplyTransform(ICanvas canvas, RectF dirtyRect)
         {
             ViewportSize = new SizeF(dirtyRect.Width, dirtyRect.Height);
-            canvas.ConcatenateTransform(GetViewMatrix());
+            Debug.WriteLine($"ViewportSize: {ViewportSize}, dirtyRect: {dirtyRect}, Transform.Position: {Transform.Position}");
+            // canvas.ConcatenateTransform(GetViewMatrix());
+            canvas.Translate(dirtyRect.Width / 2, dirtyRect.Height / 2);
+        }
+        
+        public Matrix3x2 GetViewMatrix()
+        {
+            var center = new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
+            var expectedCenter = new Vector2(300, 468);
+            var observedOffset = new Vector2(60, 40);
+            var correction = expectedCenter - observedOffset;
+            
+            return Matrix3x2.CreateTranslation(-Transform.Position)
+                   * Matrix3x2.CreateScale(Transform.Scale)
+                   * Matrix3x2.CreateTranslation(center + correction);
         }
 
         public Vector2 ScreenToWorld(Vector2 screenPoint)
@@ -38,17 +63,9 @@ namespace Hawaii
 
         public Vector2 ScreenDistanceToWorld(Vector2 screenDistance)
         {
-            // Convert screen-space distance to world-space distance by dividing by camera scale
             return new Vector2(screenDistance.X / Transform.Scale.X, screenDistance.Y / Transform.Scale.Y);
         }
 
-        public Matrix3x2 GetViewMatrix()
-        {
-            return Matrix3x2.CreateTranslation(-Transform.Position) *
-                   Matrix3x2.CreateScale(Transform.Scale) *
-                   Matrix3x2.CreateTranslation(new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2));
-        }
-        
         public void ToggleZoom(Vector2 screenFocalPoint)
         {
             var worldFocal = ScreenToWorld(screenFocalPoint);

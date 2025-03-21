@@ -42,60 +42,56 @@ namespace Hawaii
             Nodes.Clear();
             AddNode(RootNode);
         }
-
-        public Matrix3x2 GetWorldTransform(Guid nodeId)
-        {
-            var transform = Matrix3x2.Identity;
-            Guid? currentId = nodeId;
-
-            while (currentId != null)
-            {
-                if (!Nodes.TryGetValue(currentId.Value, out var currentNode))
-                    break;
-
-                transform = GetParentTransform(currentId.Value) * transform;
-                currentId = currentNode?.Parent?.Id;
-            }
-
-            return transform;
-        }
        
         public void InvalidateTransform(Guid id)
         {
             TransformChanged?.Invoke(id);
         }
 
-        public Matrix3x2 GetParentTransform(Guid nodeId)
+        private Matrix3x2 GetLocalTransform(Node node)
         {
-            var transform = Matrix3x2.Identity;
-            var node = Nodes[nodeId];
             var local = node.Transform;
-            var localBounds = node.GetLocalBounds();
             var originOffset = node.GetOriginOffset();
             var alignmentOffset = node.GetAlignmentOffset();
 
             var localMatrix =
-                Matrix3x2.CreateScale(local.Scale) *
-                Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians()) *
-                Matrix3x2.CreateTranslation(local.Position + alignmentOffset);
+                Matrix3x2.CreateTranslation(-originOffset)
+                * Matrix3x2.CreateScale(local.Scale)
+                * Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians())
+                * Matrix3x2.CreateTranslation(local.Position + alignmentOffset);
 
-            var hasParent = node.Parent != null;
+            return localMatrix;
 
-            if (!hasParent)
-            {
-                transform = Matrix3x2.CreateTranslation(-originOffset) * localMatrix;
-            }
-            else
-            {
-                var parentNode = node.Parent;
-                var parentTransform = GetWorldTransform(parentNode.Id);
-                var parentAnchorOffset = parentNode.GetOriginOffset();
-                var parentOffsetMatrix = Matrix3x2.CreateTranslation(parentAnchorOffset);
+        }
 
-                transform = Matrix3x2.CreateTranslation(-originOffset) * localMatrix * parentOffsetMatrix * parentTransform;
-            }
+        public Matrix3x2 GetWorldTransform(Guid nodeId)
+        {
+            var transform = Matrix3x2.Identity;
+            
+            if (!Nodes.TryGetValue(nodeId, out var currentNode))
+                return transform;
 
-            return transform;
+            var nodeTransform = GetLocalTransform(currentNode);
+            var parentTransform = currentNode.Parent != null 
+                ? GetParentTransform(nodeId)
+                : Matrix3x2.Identity;
+            
+            return nodeTransform * parentTransform;
+        }
+
+        public Matrix3x2 GetParentTransform(Guid nodeId)
+        {
+            var transform = Matrix3x2.Identity;
+            var node = Nodes[nodeId];
+            var parentNode = node.Parent;
+
+            if (parentNode == null)
+                return transform;
+            
+            var parentTransform = GetLocalTransform(parentNode);
+            var grandparentTransform = GetParentTransform(parentNode.Id);
+            
+            return parentTransform * grandparentTransform;
         }
 
         public IEnumerable<Node> GetNodesInDrawOrder()
@@ -112,11 +108,6 @@ namespace Hawaii
                 InvalidateNode(child.Id);
 
             InvalidateView?.Invoke();
-        }
-
-        internal void BuildCaches()
-        {
-            ClearNodes();
         }
     }
 }

@@ -17,7 +17,7 @@ public class Node
 
     public Origin Origin { get; set; } = Origin.TopLeft;
 
-    public Alignment Alignment { get; set; } = Alignment.None;
+    public Alignment Alignment { get; set; }
 
     public PositionMode Position { get; set; } = PositionMode.Relative;
 
@@ -105,21 +105,24 @@ public class Node
 
     public virtual Vector2 GetAlignmentOffset()
     {
-        if (Alignment == Alignment.None || Size.Width == float.MaxValue || Size.Height == float.MaxValue)
+        if (Size.Width == float.MaxValue || Size.Height == float.MaxValue)
             return Vector2.Zero;
 
         var halfWidth = Size.Width / 2;
         var halfHeight = Size.Height / 2;
         var originPoint = GetOriginOffset();
 
+        // Default to TopLeft with no offset unless explicitly aligning elsewhere
+        if (Alignment == Alignment.TopLeft)
+            return Vector2.Zero;
+
         Vector2 alignmentPoint = Alignment switch
         {
             Alignment.Center => new Vector2(halfWidth, halfHeight),
-            Alignment.TopLeft => Vector2.Zero,
             Alignment.TopRight => new Vector2(Size.Width, 0),
             Alignment.BottomLeft => new Vector2(0, Size.Height),
             Alignment.BottomRight => new Vector2(Size.Width, Size.Height),
-            _ => originPoint
+            _ => Vector2.Zero
         };
 
         return -(alignmentPoint - originPoint);
