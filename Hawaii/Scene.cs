@@ -58,10 +58,9 @@ namespace Hawaii
                 Matrix3x2.CreateTranslation(-originOffset)
                 * Matrix3x2.CreateScale(local.Scale)
                 * Matrix3x2.CreateRotation(local.Rotation.DegreesToRadians())
-                * Matrix3x2.CreateTranslation(local.Position + alignmentOffset);
+                * Matrix3x2.CreateTranslation(local.Position + alignmentOffset * 2);
 
             return localMatrix;
-
         }
 
         public Matrix3x2 GetWorldTransform(Guid nodeId)

@@ -8,29 +8,29 @@ using System.Numerics;
  {
      public List<Feature> Features { get; set; } =
      [
-         // new Feature
-         // {
-         //     Name = "Middle",
-         //     Transform = new Transform
-         //     {
-         //         Position = new Vector2(500, 500)
-         //     }
-         // },
-         // new Feature
-         // {
-         //     Name = "Bottom Right",
-         //     Transform = new Transform
-         //     {
-         //         Position = new Vector2(1000, 1000)
-         //     }
-         // },
-         // new Feature
-         // {
-         //     Name = "Top Left",
-         //     Transform = new Transform
-         //     {
-         //         Position = new Vector2(0, 0)
-         //     }
-         // },
+         new Feature
+         {
+             Name = "Middle",
+             Transform = new Transform
+             {
+                 Position = new Vector2(250, 250)
+             }
+         },
+         new Feature
+         {
+             Name = "Bottom Right",
+             Transform = new Transform
+             {
+                 Position = new Vector2(500, 500)
+             }
+         },
+         new Feature
+         {
+             Name = "Top Left",
+             Transform = new Transform
+             {
+                 Position = new Vector2(0, 0)
+             }
+         },
      ];
  }

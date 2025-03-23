@@ -25,21 +25,9 @@ namespace Hawaii
         public void ApplyTransform(ICanvas canvas, RectF dirtyRect)
         {
             ViewportSize = new SizeF(dirtyRect.Width, dirtyRect.Height);
-            Debug.WriteLine($"ViewportSize: {ViewportSize}, dirtyRect: {dirtyRect}, Transform.Position: {Transform.Position}");
-
-            // Matrix3x2.Invert(GetViewMatrix(), out var viewMatrix);
-            // canvas.ConcatenateTransform(viewMatrix);
-            // canvas.ConcatenateTransform(GetViewMatrix());
             
             canvas.Scale(Transform.Scale.X, Transform.Scale.Y);
             canvas.Translate(dirtyRect.Width / 2  - Transform.Position.X, dirtyRect.Height / 2 - Transform.Position.Y);
-        }
-        
-        public Matrix3x2 GetViewMatrix()
-        {
-            var center = new Vector2(ViewportSize.Width / 2, ViewportSize.Height / 2);
-            return Matrix3x2.CreateScale(Transform.Scale) // Apply zoom first
-                   * Matrix3x2.CreateTranslation(center + Transform.Position); // Then center + pan
         }
 
         public Vector2 ScreenToWorld(Vector2 screenPoint)

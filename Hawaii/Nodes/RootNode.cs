@@ -60,10 +60,6 @@ public class RootNode : Node
 
         public void Draw(ICanvas canvas, Node node, RectF dirtyRect)
         {
-            canvas.Alpha = 0.6f;
-            canvas.FillColor = Colors.Magenta;
-            canvas.FillRectangle(0, 0, 50, 50);
-
             //     if (node is not RootNode rootNode)
             //         return;
             //

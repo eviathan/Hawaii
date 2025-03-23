@@ -45,17 +45,11 @@ public class SceneRenderer : BindableObject, IDrawable
     
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
-        // canvas.FillColor = Colors.Blue;
-        // canvas.FillRectangle(dirtyRect.Width / 2, dirtyRect.Height / 2, 25, 25); // (300, 468)
-        //
-        // canvas.FillColor = Colors.White;
-        // canvas.FillCircle(400, 468, 10); // Test position
-
         canvas.SaveState();
         _camera.ApplyTransform(canvas, dirtyRect);
 
-        canvas.FillColor = Colors.Green;
-        canvas.FillCircle(0, 0, 15); // Where is this?
+        // canvas.FillColor = Colors.Green;
+        // canvas.FillCircle(0, 0, 15); // Where is this?
 
         foreach (var node in _scene.GetNodesInDrawOrder())
         {
@@ -65,8 +59,8 @@ public class SceneRenderer : BindableObject, IDrawable
             canvas.SaveState();
             canvas.ConcatenateTransform(nodeWorld);
             
-            canvas.FillColor = Colors.Red;
-            canvas.FillCircle(0, 0, 10); // (60, 40)
+            // canvas.FillColor = Colors.Red;
+            // canvas.FillCircle(0, 0, 10);
             
             node.Renderer?.Draw(canvas, node, dirtyRect);
             

@@ -9,7 +9,7 @@ public class ImageNode : Node
 {    
     public ImageNode(Scene scene) : base(scene)
     {
-        Size = new SizeF(250, 250);
+        Size = new SizeF(500, 500);
         Origin = Origin.TopLeft;
         Alignment = Alignment.Center;
         Renderer = new NodeRenderer();
